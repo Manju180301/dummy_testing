@@ -1,0 +1,99 @@
+{% extends "webapp/layouts/base.html" %}
+{% load static %}
+{% block content %}
+
+
+<div class="container mt-4 attendance_page_code">
+  <div class="search-box">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="attendance_headning">
+          <h3 class="mb-3">Attendance</h3>
+        </div>
+      </div>
+    </div>
+
+    <!-- Date Search -->
+    <form method="get" class="d-flex gap-3 mb-4">
+      <input type="date" name="date" value="{{ selected_date }}" class="form-control" required />
+      <button class="btn btn-search px-4">Search</button>
+    </form>
+  </div>
+  <div class="card shadow-sm att-card">
+    <div class="card-body p-0 overflow-auto">
+      <table class="table table-bordered mb-0">
+        <thead>
+          <tr>
+            <th>S.No</th>
+            <th>Image</th>
+            <th>Emp ID</th>
+            <th>Emp Name</th>
+            <th>Check In</th>
+            <th>Check Out</th>
+            <th>Total Hours</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in attendance %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+
+            <td>
+              {% if row.image %}
+                {% if OS_TYPE == "Windows" %}
+                    <img src="{{ MEDIA_URL }}{{ row.image }}" class="att-img" />
+                {% else %}
+                    <img src="/media/{{ row.image }}" class="att-img" />
+                {% endif %}
+              {% else %}
+              <span>-</span>
+              {% endif %}
+            </td>
+
+            <td>{{ row.emp_id }}</td>
+            <td>{{ row.emp_name }}</td>
+
+            <!-- Check In -->
+            <td>
+              <div class="time">
+                {{ row.check_in_time|date:"H:i:s" }}
+              </div>
+              <div class="cam">
+                {{ row.check_in_cam }}
+              </div>
+            </td>
+
+            <!-- Check Out -->
+            <td>
+              {% if row.check_out_time %}
+              <div class="time">
+                {{ row.check_out_time|date:"H:i:s" }}
+              </div>
+              <div class="cam">
+                {{ row.check_out_cam }}
+              </div>
+              {% else %}
+              <span class="text-muted">—</span>
+              {% endif %}
+            </td>
+
+            <td>
+              {{ row.total_hours }}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="text-center text-muted">
+              No attendance data found
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+
+      </table>
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}

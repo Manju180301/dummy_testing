@@ -1,0 +1,325 @@
+{% load static %}
+
+<!-- Sidebar CSS -->
+<style>
+  /* Hide submenus by default */
+  .nav-submenu {
+    display: none;
+    padding-left: 20px;
+  }
+  
+  /* Show submenu when parent is active */
+  .nav-item.nav-hasmenu.active > .nav-submenu {
+    display: block;
+    margin: 0 20px;
+  }
+  
+  /* Rotate arrow when active */
+  .nav-item.nav-hasmenu.active .nav-arrow i {
+    transform: rotate(90deg);
+  }
+  
+  /* ===== Sidebar Scroll Fix ===== */
+  .app-sidebar {
+    height: 100vh;
+    overflow: hidden;
+  }
+  
+  .app-navbar-wrapper {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .navbar-content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-bottom: 30px;
+  }
+  
+  /* Smooth scrollbar */
+  .navbar-content::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .navbar-content::-webkit-scrollbar-thumb {
+    background: #c5c7d0;
+    border-radius: 10px;
+  }
+  
+  .navbar-content::-webkit-scrollbar-thumb:hover {
+    background: #9fa3b5;
+  }
+  
+  /* Submenu link styling */
+  .app-sidebar .nav-submenu .nav-link {
+    display: block;
+    font-weight: 500;
+    margin: 4px 0;
+    padding: 10px 30px 10px 35px;
+  }
+  
+  /* Active leaf item in submenu */
+  .app-sidebar .nav-submenu .nav-item.active {
+    background-color: white;
+    color: white;
+    border-radius: 6px;
+  }
+  .app-sidebar .nav-submenu .nav-item:hover {
+    background-color: white;
+    color: white;
+    border-radius: 6px;
+  }
+  .app-sidebar .nav-submenu .nav-item.active a {
+    color: #7b0323 !important;
+  }
+  body.theme-2 .app-sidebar .nav-item > .nav-submenu .nav-item:hover > .nav-link {
+    color: #7b0323 !important;
+  }
+  
+  /* Optional: highlight parent menu item when active */
+  .nav-item.nav-hasmenu.active > .nav-link {
+    background: rgba(0, 0, 0, 0.07);
+    font-weight: 600;
+  }
+  .app-sidebar .nav-submenu .nav-item:before {
+    left: 15px;
+  }
+  .site-header .ntf-dropdown .notification-body {
+    overflow: auto;
+  }
+  body.theme-2 .app-sidebar.app-light-sidebar .app-navbar > .nav-item.active > .nav-link,
+  body.theme-2 .app-sidebar .app-navbar > .nav-item.active > .nav-link {
+    background-color: #7b0323;
+    background: #7b0323;
+  }
+  body.theme-2 .app-sidebar.app-light-sidebar .app-navbar > .nav-item:active > .nav-link,
+  body.theme-2 .app-sidebar .app-navbar > .nav-item:active > .nav-link,
+  body.theme-2 .app-sidebar.app-light-sidebar .app-navbar > .nav-item:hover > .nav-link,
+  body.theme-2 .app-sidebar.app-light-sidebar .app-navbar > .nav-item:active > .nav-link,
+  body.theme-2 .app-sidebar .app-navbar > .nav-item:hover > .nav-link {
+    background-color: #7b0323;
+    background: #7b0323;
+  }
+  
+  body .table thead th {
+    background: #eddee2;
+    font-weight: 700;
+    text-transform: capitalize;
+    font-size: 14px;
+    color: #495057;
+  }
+  
+  .table td,
+  .table th {
+    vertical-align: middle;
+    text-align: center;
+    padding: 10px 15px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+</style>
+
+<aside class="app-sidebar app-light-sidebar">
+  <div class="app-navbar-wrapper">
+    <!-- Logo -->
+    <div class="brand-link brand-logo">
+      <a href="{% url 'index' %}" class="b-brand"><img src="{% static 'webapp/assets/images/logo.png' %}" alt="Logo" class="logo logo-lg w-50" /></a>
+    </div>
+
+    <!-- Main Navigation -->
+    <div class="navbar-content">
+      <ul class="app-navbar">
+        <li class="nav-item nav-hasmenu">
+          <a href="#!" class="nav-link">
+            <span class="nav-icon"><i class="ti ti-layout-2"></i></span>
+            <span class="nav-text">Dashboard</span>
+            <span class="nav-arrow"><i data-feather="chevron-right"></i></span>
+          </a>
+          <ul class="nav-submenu">
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'index' %}">Default</a>
+            </li>
+            {% comment %}
+            <li class="nav-item">
+              <a class="nav-link" href="dashboard/ecommerce.html">Ecommerce</a>
+            </li>
+            {% endcomment %}
+          </ul>
+        </li>
+
+        <li class="nav-item nav-caption">
+          <label>Employee</label>
+        </li>
+
+        <li class="nav-item nav-hasmenu">
+          <a href="#!" class="nav-link">
+            <span class="nav-icon"><i class="ti ti-layout-2"></i></span>
+            <span class="nav-text">Add Employee</span>
+            <span class="nav-arrow"><i data-feather="chevron-right"></i></span>
+          </a>
+          <ul class="nav-submenu">
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'face_register' %}">Add Face</a>
+            </li>
+          </ul>
+        </li>
+
+        <li class="nav-item nav-hasmenu">
+          <a href="#!" class="nav-link">
+            <span class="nav-icon"><i data-feather="camera"></i></span>
+            <span class="nav-text">Cameras</span>
+            <span class="nav-arrow"><i data-feather="chevron-right"></i></span>
+          </a>
+          <ul class="nav-submenu">
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'camera' %}">CCTV</a>
+            </li>
+          </ul>
+        </li>
+
+        <li class="nav-item nav-hasmenu">
+          <a href="#!" class="nav-link">
+            <span class="nav-icon"><i data-feather="activity"></i></span>
+            <span class="nav-text">Employee Track</span>
+            <span class="nav-arrow"><i data-feather="chevron-right"></i></span>
+          </a>
+          <ul class="nav-submenu">
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'track_employee' %}">Track</a>
+            </li>
+          </ul>
+        </li>
+
+        <li class="nav-item nav-hasmenu">
+          <a href="#!" class="nav-link">
+            <span class="nav-icon"><i data-feather="users"></i></span>
+            <span class="nav-text">Persons</span>
+            <span class="nav-arrow"><i data-feather="chevron-right"></i></span>
+          </a>
+          <ul class="nav-submenu">
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'detected_faces' %}">Detected Face</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'no_face' %}">No Face</a>
+            </li>
+          </ul>
+        </li>
+
+        <li class="nav-item nav-hasmenu">
+          <a href="#!" class="nav-link">
+            <span class="nav-icon"><i data-feather="eye"></i></span>
+            <span class="nav-text">Employee List</span>
+            <span class="nav-arrow"><i data-feather="chevron-right"></i></span>
+          </a>
+          <ul class="nav-submenu">
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'employee_list' %}">List</a>
+            </li>
+          </ul>
+        </li>
+
+        <li class="nav-item nav-hasmenu">
+          <a href="#!" class="nav-link">
+            <span class="nav-icon"><i data-feather="calendar"></i></span>
+            <span class="nav-text">Attendance</span>
+            <span class="nav-arrow"><i data-feather="chevron-right"></i></span>
+          </a>
+          <ul class="nav-submenu">
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'attendance_page' %}">Time</a>
+            </li>
+          </ul>
+        </li>
+
+        <li class="nav-item nav-hasmenu">
+          <a href="#!" class="nav-link">
+            <span class="nav-icon"><i data-feather="bell"></i></span>
+            <span class="nav-text">Alert</span>
+            <span class="nav-arrow"><i data-feather="chevron-right"></i></span>
+          </a>
+          <ul class="nav-submenu">
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'login' %}">Create Rules</a>
+            </li>
+          </ul>
+        </li>
+
+        <li class="nav-item nav-hasmenu">
+          <a href="#!" class="nav-link">
+            <span class="nav-icon"><i data-feather="trending-up"></i></span>
+            <span class="nav-text">Report</span>
+            <span class="nav-arrow"><i data-feather="chevron-right"></i></span>
+          </a>
+          <ul class="nav-submenu">
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'violation_dashboard' %}">Rule Report</a>
+            </li>
+          </ul>
+        </li>
+
+        
+      </ul>
+    </div>
+  </div>
+</aside>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // 1. Accordion behavior (open/close menus)
+    document.querySelectorAll('.nav-item.nav-hasmenu > a').forEach((link) => {
+      link.addEventListener('click', function (e) {
+        e.preventDefault()
+        const parentLi = this.parentElement
+  
+        // Close all other menus (accordion style)
+        document.querySelectorAll('.nav-item.nav-hasmenu.active').forEach((item) => {
+          if (item !== parentLi) item.classList.remove('active')
+        })
+  
+        // Toggle current menu
+        parentLi.classList.toggle('active')
+      })
+    })
+  
+    // 2. Auto-highlight current page
+    let currentPath = window.location.pathname
+    // Remove trailing slash for consistent comparison
+    if (currentPath.endsWith('/')) {
+      currentPath = currentPath.slice(0, -1)
+    }
+  
+    console.log('Current path:', currentPath)
+  
+    document.querySelectorAll('.nav-submenu .nav-link').forEach((link) => {
+      let href = link.getAttribute('href') || ''
+  
+      if (!href || href.startsWith('#') || href.startsWith('javascript:')) return
+  
+      // Normalize href (remove trailing slash)
+      let target = href
+      if (target.endsWith('/')) {
+        target = target.slice(0, -1)
+      }
+  
+      // Exact match is usually safest for Django named URLs
+      if (target === currentPath) {
+        console.log('MATCH:', href)
+  
+        // Activate leaf item
+        const leafLi = link.closest('.nav-item')
+        if (leafLi) leafLi.classList.add('active')
+  
+        // Activate all parent menus (show submenu + rotate arrow)
+        let current = leafLi
+        while (current && current !== document) {
+          if (current.classList.contains('nav-item') && current.classList.contains('nav-hasmenu')) {
+            current.classList.add('active')
+          }
+          current = current.parentElement
+        }
+      }
+    })
+  })
+</script>

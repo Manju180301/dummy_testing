@@ -1,0 +1,130 @@
+{% extends 'webapp/layouts/base.html' %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3>No Employee Shift Master</h3>
+
+        <a href="{% url 'create_no_employee_rule' %}"
+           class="btn btn-secondary">
+            Back
+        </a>
+    </div>
+
+    <!-- ADD SHIFT -->
+
+    <div class="card mb-4">
+        <div class="card-header">Add Shift</div>
+
+        <div class="card-body">
+
+            <form method="POST">
+                {% csrf_token %}
+
+                <div class="row">
+
+                    <div class="col-md-4">
+                        <label>Shift Name</label>
+                        <input type="text"
+                               name="shift_name"
+                               class="form-control"
+                               value="{{ edit_shift.shift_name|default:'' }}"
+                               placeholder="Shift I"
+                               required>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label>Start Time</label>
+                        <input type="time"
+                               name="start_time"
+                               value="{% if edit_shift %}{{ edit_shift.start_time|time:'H:i' }}{% endif %}"
+                               class="form-control"
+                               required>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label>End Time</label>
+                         <input type="time"
+                               name="end_time"
+                               value="{% if edit_shift %}{{ edit_shift.end_time|time:'H:i' }}{% endif %}"
+                               class="form-control"
+                               required>
+                    </div>
+
+                    <div class="col-md-2 mt-4">
+                        <button type="submit"class="btn btn-primary w-100">Save</button>
+                    </div>
+
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+    <!-- SHIFT LIST -->
+
+    <div class="card">
+
+        <div class="card-header">
+            Shift List
+        </div>
+
+        <div class="card-body">
+
+            <table class="table table-bordered">
+
+                <thead>
+                    <tr>
+                        <th>Shift Name</th>
+                        <th>Start Time</th>
+                        <th>End Time</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for shift in shifts %}
+
+                    <tr>
+                        <td>{{ shift.shift_name }}</td>
+                        <td>{{ shift.start_time|time:"H:i" }}</td>
+                        <td>{{ shift.end_time|time:"H:i" }}</td>
+                        <td>
+                            <a href="{% url 'edit_no_employee_shift' shift.id %}"
+                            class="btn btn-sm btn-primary">
+                                Edit
+                            </a>
+
+                            <a href="{% url 'delete_no_employee_shift' shift.id %}"
+                            class="btn btn-sm btn-danger"
+                            onclick="return confirm('Delete this shift?')">
+                                Delete
+                            </a>
+                        </td>
+                    </tr>
+
+                    {% empty %}
+
+                    <tr>
+                        <td colspan="3" class="text-center">
+                            No Shifts Found
+                        </td>
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,646 @@
+{% extends 'webapp/layouts/base.html' %}
+{% block content %}
+
+<style>
+
+.summary-cards{
+    display:flex;
+    gap:20px;
+    margin-bottom:20px;
+}
+
+.summary-card{
+    flex:1;
+    background:#fff;
+    padding:20px;
+    border-radius:12px;
+    text-align:center;
+    box-shadow:0 2px 10px rgba(0,0,0,.08);
+}
+
+.card-label{
+    font-size:14px;
+    color:#777;
+}
+
+.card-value{
+    font-size:26px;
+    font-weight:700;
+    margin-top:10px;
+}
+
+.chart-card{
+    background:#fff;
+    padding:20px;
+    border-radius:12px;
+    margin-bottom:20px;
+    box-shadow:0 2px 10px rgba(0,0,0,.08);
+}
+
+#employeeChart{
+    width:350px !important;
+    height:350px !important;
+    margin:auto;
+}
+.apply_btn_clone_flex{
+  display: flex;
+  gap: 14px;
+}
+
+#shiftChart{
+    max-height:350px;
+}
+</style>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="recordModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-header-icon">
+        <i class="fas fa-info-circle"></i>
+      </div>
+      <div class="modal-header-text">
+        <h3>No Employee Rule</h3>
+        <p id="modal-subtitle">—</p>
+      </div>
+      <button class="modal-close-btn" onclick="closeModal()" aria-label="Close"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-photo-side">
+        <img id="modal-img" src="" alt="Evidence Photo" />
+        <div class="modal-photo-label"><i class="fas fa-camera"></i> Evidence Photo</div>
+        <div class="modal-rule-tag">No Employee Rule</div>
+      </div>
+      <div class="modal-info-side">
+        <div class="modal-section">
+          <div class="modal-section-title"><i class="fas fa-map-marker-alt"></i> Incident Details</div>
+          <div class="modal-field"><span class="modal-field-label">Location</span><span class="modal-field-value" id="modal-place">—</span></div>
+          <div class="modal-field"><span class="modal-field-label">Shift</span><span class="modal-field-value" id="modal-shift">—</span></div>
+          <div class="modal-field"><span class="modal-field-label">Date & Time</span><span class="modal-field-value" id="modal-time">—</span></div>
+          <div class="modal-field"><span class="modal-field-label">Detected</span><span class="modal-field-value" id="modal-count">—</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn-modal-close" onclick="closeModal()"><i class="fas fa-times"></i> Close</button></div>
+  </div>
+</div>
+
+<div class="ner-wrapper">
+  <!-- HEADER -->
+  <div class="ner-header">
+    <div class="header-title">
+      <h2><i class="fas fa-users"></i> No Employee Rule</h2>
+      <span class="header-subtitle">Configure alerts and review no-employee detections</span>
+    </div>
+    <!--<a href="{% url 'create_rule' %}" class="btn-back"><i class="fas fa-arrow-left"></i> Back</a>-->
+
+    <div style="display:flex; gap:10px;">
+      <a href="{% url 'create_rule' %}" class="btn-back"><i class="fas fa-arrow-left"></i> Back</a>
+      <a href="{% url 'no_employee_shift' %}"class="btn-back"><i class="fas fa-clock"></i>Shift</a>
+    </div>
+
+  </div>
+
+  <!-- FORM CARD -->
+  <div class="ner-card">
+    <div class="card-title">{% if rule_key %}Edit Rule{% else %}Configure Rule{% endif %}</div>
+    <form method="POST" id="ruleForm">
+      {% csrf_token %}
+      {% if rule_key %}
+        <input type="hidden" name="edit_rule_key" value="{{ rule_key }}">
+      {% endif %}
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Alert Duration (min) *</label>
+          <input type="number" name="alert_duration" value="{{ form_data.alert_duration|default:'' }}" step="0.5" min="0.5" required>
+        </div>
+        <div class="form-group">
+          <label>Min Count *</label>
+          <input type="number" name="min_count" value="{{ form_data.min_count|default:'' }}" min="0" required>
+        </div>
+        <div class="form-group">
+          <label>Break Start Time</label>
+          <input type="time" name="break_start" value="{{ form_data.break_start|default:'' }}">
+        </div>
+        <div class="form-group">
+          <label>Break End Time</label>
+          <input type="time" name="break_end" value="{{ form_data.break_end|default:'' }}">
+        </div>
+        <div class="form-group">
+          <label>Head Email *</label>
+          <input type="email" name="email" value="{{ form_data.email|default:'' }}" placeholder="your@email.com" required>
+        </div>
+        <div class="form-group">
+          <label>Select Camera(s) *</label>
+          <div class="multi-dropdown" id="cameraDropdown">
+            <div class="dropdown-header" onclick="toggleCameraDropdown()">
+              <span id="cameraText">Select Camera(s)</span>
+              <span><i class="fas fa-chevron-down"></i></span>
+            </div>
+            <div class="dropdown-body" id="cameraBody">
+              {% for cam in cameras %}
+              <label class="camera-item">
+                <input type="checkbox" name="cameras" value="{{ cam }}" {% if cam in selected_cameras %}checked{% endif %} onchange="updateCameraText(); updateBoundarySelectors();">
+                <span>{{ cam }}</span>
+              </label>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select name="active">
+            <option value="true" {% if form_data.active == 'true' %}selected{% endif %}>Active</option>
+            <option value="false" {% if form_data.active == 'false' %}selected{% endif %}>Inactive</option>
+          </select>
+        </div>
+      </div>
+      <div id="boundarySelectorsContainer" class="mt-4"></div>
+      <button type="submit" class="btn-save"><i class="fas fa-save"></i> {% if rule_key %}Update Rule{% else %}Save No Employee Rule{% endif %}</button>
+      {% if rule_key %}
+        <a href="{% url 'create_no_employee_rule' %}" class="btn-cancel" style="margin-left: 10px;">Cancel Edit</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <!-- RULE LIST TABLE -->
+  <div class="ner-table-wrap">
+    <div class="ner-table-head">
+      <h3><i class="fas fa-clipboard-list"></i> Rule List</h3>
+      <span class="record-badge">{{ rules|length }} rule(s)</span>
+    </div>
+    <table class="ner-table">
+      <thead>
+        <tr>
+          <th style="text-align: center;">Cameras</th>
+          <th style="text-align: center;">Min Count</th>
+          <th style="text-align: center;">Duration</th>
+          <th style="text-align: center;">Break Time</th>
+          <th style="text-align: center;">Status</th>
+          <th style="text-align: center;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for key, r in rules.items %}
+        <tr>
+          <td style="text-align: center;">{{ r.cameras|join:', ' }}</td>
+          <td style="text-align: center;">{{ r.min_count }}</td>
+          <td style="text-align: center;">{{ r.duration_minutes }} min</td>
+          <td style="text-align: center;">
+              {% if r.break_start and r.break_end %}
+                  {{ r.break_start }} - {{ r.break_end }}
+              {% else %}
+                  <span style="color:var(--text-muted)">No Break</span>
+              {% endif %}
+          </td>
+          <td style="text-align: center;">
+              {% if r.active %}
+                  <span class="status-active">ACTIVE</span>
+              {% else %}
+                  <span class="status-inactive">INACTIVE</span>
+              {% endif %}
+          </td>
+          <td style="text-align: center;">
+              <a href="{% url 'toggle_no_employee_rule' key %}" class="action-link" title="Toggle Status"><i class="fas fa-power-off"></i></a>
+              <span class="sep">|</span>
+              <a href="{% url 'create_no_employee_rule' %}?edit_rule={{ key }}" class="action-link" title="Edit Rule"><i class="fas fa-edit"></i></a>
+              <span class="sep">|</span>
+              <a href="{% url 'delete_no_employee_rule' key %}" class="action-link del" onclick="return confirm('Delete this rule?')" title="Delete Rule"><i class="fas fa-trash"></i></a>
+          </td>
+      </tr>
+        {% empty %}
+        <tr class="empty-row"><td colspan="6">No rules configured yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- FILTER -->
+  <div class="filter-card">
+    <div class="filter-title"><i class="fas fa-filter"></i> Filter & Search Records</div>
+    <form method="GET">
+      <div class="filter-row">
+        <div class="fg"><label><i class="fas fa-map-marker-alt"></i> Place</label><input type="text" name="place" placeholder="e.g. Conference Hall" value="{{ request.GET.place }}"></div>
+         
+        <div class="form-group">
+          <label><i class="fas fa-clock"></i> Shift</label>
+           <div class="multi-dropdown" >
+          <select name="shift" style="width: 100%;">
+              <option value="All">All</option>
+
+              {% for shift in shifts %}
+              <option value="{{ shift.shift_name }}"
+                  {% if selected_shift == shift.shift_name %}selected{% endif %}>
+                  {{ shift.shift_name }}
+              </option>
+              {% endfor %}
+          </select>
+           </div>
+        </div> 
+         <div class="fg"><label><i class="fas fa-calendar-alt"></i> Date Range</label><div class="date-range"><input type="date" name="date_from" value="{{ request.GET.date_from }}"><input type="date" name="date_to" value="{{ request.GET.date_to }}"></div></div>
+         <div class="apply_btn_clone_flex">
+        <button type="submit" class="btn-apply"><i class="fas fa-filter"></i> Apply</button>
+        <a href="{% url 'create_no_employee_rule' %}" class="btn-clear" title="Clear filters"><i class="fas fa-times"></i></a>
+      </div>
+      </div>
+    </form>
+  </div>
+
+
+<div class="chart_summary_flex_div">
+  <!-- CHART -->
+  <div class="chart-card">
+      <h3>Employee Presence Analysis</h3>
+      <canvas id="employeeChart"></canvas>
+  </div>
+
+  <div class="chart-card">
+
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+
+        <h3>Shift Analysis</h3>
+
+        <div>
+
+            <a href="?chart_type=day"
+              class="btn btn-sm {% if chart_type == 'day' %}btn-primary{% else %}btn-secondary{% endif %}">
+                Day-{{ current_date }}
+            </a>
+
+            <a href="?chart_type=month"
+              class="btn btn-sm {% if chart_type == 'month' %}btn-primary{% else %}btn-secondary{% endif %}">
+                Month-{{ current_month }}
+            </a>
+
+        </div>
+
+    </div>
+
+    <canvas id="shiftChart"></canvas>
+
+  </div>
+
+
+  <!-- SUMMARY CARDS -->
+  <div class="summary-cards">
+
+    <div class="summary-card">
+        <div class="card-label">
+            Total Working Hours
+        </div>
+
+        <div class="card-value">
+            {{ working_hours_text }}
+        </div>
+    </div>
+
+    <div class="summary-card">
+        <div class="card-label">
+            No Employee Time
+        </div>
+
+        <div class="card-value">
+            {{ no_employee_text }}
+        </div>
+    </div>
+
+    <div class="summary-card">
+        <div class="card-label">
+            Employee Present
+        </div>
+
+        <div class="card-value">
+            {{ employee_text }}
+        </div>
+    </div>
+
+  </div>  
+</div>
+  <!-- RECORDS TABLE -->
+  <div class="ner-table-wrap">
+    <div class="records-table-head">
+      <h3><i class="fas fa-th-large"></i> No Employee Records</h3>
+      <div class="head-right">
+        <span class="record-badge">{{ page_obj.paginator.count }} record{{ page_obj.paginator.count|pluralize }}</span>
+        <a href="{% url 'export_no_employee_pdf' %}?{{ request.GET.urlencode }}" class="btn-pdf"><i class="fas fa-file-pdf"></i> Export PDF</a>
+      </div>
+    </div>
+    <table class="ner-table">
+      <thead><tr><th style="text-align: center;">Image</th><th style="text-align: center;">Place</th><th style="text-align: center;">Shift</th><th style="text-align: center;">Date</th><th style="text-align: center;">Time Period</th><th style="text-align: center;">Detected Count</th><th style="text-align: center;">Action</th></tr></thead>
+      <tbody>
+        {% for r in page_obj %}
+        <tr>
+          <td>{% if r.image_path %}<img src="{{ MEDIA_URL }}{{ r.image_path }}" class="thumb-img">{% endif %}</td>
+          <td>{{ r.place }}</td>
+          <td>{% if r.shift_name %}{{ r.shift_name }}{% else %}--{% endif %}</td>
+          <td>{{ r.created_at|date:"Y-m-d" }}</td>
+          <td>{% if r.time %}{{ r.time }}{% else %}--{% endif %}</td>
+          <td>{{ r.detected_count }}</td>
+          <td><button class="btn-view" data-img="{% if OS_TYPE == 'Windows' %}{{ MEDIA_URL }}{{ r.image_path }}{% else %}/media/{{ r.image_path }}{% endif %}" data-place="{{ r.place }}" data-shift="{{ r.shift_name }}" data-time="{{ r.time }}" data-count="{{ r.detected_count }}" onclick="openModalFromBtn(this)"><i class="fas fa-eye"></i> View</button></td>
+        </tr>
+        {% empty %}<tr class="empty-row"><td colspan="7">No records found.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+    <!-- PAGINATION -->
+    <div class="pagination-row">
+      <div class="pagination-left"><span>Showing <b>{{ page_obj.start_index }}-{{ page_obj.end_index }}</b> of <b>{{ page_obj.paginator.count }}</b></span><div class="rows-per-page">Rows per page: <input type="number" id="rowsPerPage" value="{{ request.GET.per_page|default:'50' }}" min="1" onchange="changeRowsPerPage(this.value)"></div></div>
+      <div class="page-numbers">
+        {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{% if query_string %}&{{ query_string }}{% endif %}" class="page-btn"><i class="fas fa-chevron-left"></i></a>{% endif %}
+        {% for num in page_obj.paginator.page_range %}<a href="?page={{ num }}{% if query_string %}&{{ query_string }}{% endif %}" class="page-btn {% if page_obj.number == num %}active{% endif %}">{{ num }}</a>{% endfor %}
+        {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{% if query_string %}&{{ query_string }}{% endif %}" class="page-btn"><i class="fas fa-chevron-right"></i></a>{% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleCameraDropdown() {
+  const body = document.getElementById('cameraBody');
+  body.style.display = body.style.display === 'block' ? 'none' : 'block';
+}
+function updateCameraText() {
+  const checked = document.querySelectorAll('input[name="cameras"]:checked');
+  document.getElementById('cameraText').innerText = checked.length ? checked.length + ' camera(s) selected' : 'Select Camera(s)';
+}
+document.addEventListener('click', function(e) {
+  const box = document.getElementById('cameraDropdown');
+  if (box && !box.contains(e.target)) document.getElementById('cameraBody').style.display = 'none';
+});
+
+function openModal(data) {
+  const img = document.getElementById('modal-img');
+  if (data.img) { img.src = data.img; img.style.display = 'block'; } else { img.style.display = 'none'; }
+  document.getElementById('modal-place').innerText = data.place || '—';
+  document.getElementById('modal-shift').innerText = data.shift || '—';
+  document.getElementById('modal-time').innerText = data.time || '—';
+  document.getElementById('modal-count').innerText = data.count || '—';
+  document.getElementById('modal-subtitle').innerText = data.subtitle || '—';
+  document.getElementById('recordModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal() {
+  document.getElementById('recordModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.getElementById('recordModal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeModal(); });
+function changeRowsPerPage(val) {
+  const url = new URL(window.location.href);
+  url.searchParams.set('per_page', val);
+  url.searchParams.set('page', 1);
+  window.location.href = url.toString();
+}
+function openModalFromBtn(btn) {
+  openModal({
+    img: btn.getAttribute("data-img"),
+    place: btn.getAttribute("data-place"),
+    shift: btn.getAttribute("data-shift"),
+    time: btn.getAttribute("data-time"),
+    count: btn.getAttribute("data-count"),
+    subtitle: btn.getAttribute("data-place") + " · " + btn.getAttribute("data-time")
+  });
+}
+
+// ================= BOUNDARY FEATURE =================
+let preSelectedBoundaries = {{ selected_boundaries_per_camera|safe|default:"{}" }};
+function updateBoundarySelectors() {
+  const container = document.getElementById('boundarySelectorsContainer');
+  if (!container) return;
+  const selectedCameras = Array.from(document.querySelectorAll('input[name="cameras"]:checked')).map(cb => cb.value);
+  document.querySelectorAll('.boundary-selector').forEach(sel => { if (!selectedCameras.includes(sel.dataset.camera)) sel.remove(); });
+  for (let cam of selectedCameras) {
+    if (!document.querySelector(`.boundary-selector[data-camera="${cam}"]`)) addBoundarySelector(cam);
+  }
+}
+function addBoundarySelector(cameraName) {
+  const container = document.getElementById('boundarySelectorsContainer');
+  const preSelected = preSelectedBoundaries[cameraName] || [];
+  const preSelectedValue = preSelected.join(',');
+  const html = `
+    <div class="boundary-selector mb-3" data-camera="${cameraName}">
+      <label><strong>Boundaries for ${cameraName}</strong></label>
+      <div class="boundary-multiselect">
+        <div class="multi-dropdown boundary-dropdown" id="boundaryDropdown_${cameraName}">
+          <div class="dropdown-header" onclick="toggleBoundaryDropdown('${cameraName}')">
+            <span id="boundaryText_${cameraName}">Select Boundaries</span><span><i class="fas fa-chevron-down"></i></span>
+          </div>
+          <div class="dropdown-body" id="boundaryBody_${cameraName}"><div class="loading">Loading boundaries...</div></div>
+        </div>
+      </div>
+      <button type="button" class="btn btn-sm btn-outline-primary mt-1" onclick="openBoundaryEditor('${cameraName}')">+ Add Boundary</button>
+      <input type="hidden" name="boundaries_${cameraName}" id="boundaries_hidden_${cameraName}" value="${preSelectedValue}">
+    </div>
+  `;
+  container.insertAdjacentHTML('beforeend', html);
+  loadBoundariesForCamera(cameraName);
+}
+function toggleBoundaryDropdown(cam) {
+  let body = document.getElementById(`boundaryBody_${cam}`);
+  if (body) body.style.display = body.style.display === 'block' ? 'none' : 'block';
+}
+async function loadBoundariesForCamera(cameraName) {
+  const bodyDiv = document.getElementById(`boundaryBody_${cameraName}`);
+  if (!bodyDiv) return;
+  bodyDiv.innerHTML = '<div class="loading">Loading boundaries...</div>';
+  try {
+    const response = await fetch(`/get-camera-boundaries/?camera=${encodeURIComponent(cameraName)}`);
+    const data = await response.json();
+    const boundaries = data.boundaries || [];
+    const hidden = document.getElementById(`boundaries_hidden_${cameraName}`);
+    const selected = hidden && hidden.value ? hidden.value.split(',') : [];
+    let html = '';
+    if (boundaries.length) {
+      boundaries.forEach(b => {
+        const checked = selected.includes(b.name) ? 'checked' : '';
+        html += `<label class="boundary-item"><input type="checkbox" name="boundary_${cameraName}" value="${b.name}" onchange="updateBoundaryHiddenInput('${cameraName}')" ${checked}> ${b.name}</label>`;
+      });
+    } else {
+      html = '<div class="text-muted">No boundaries yet. Click "Add Boundary".</div>';
+    }
+    bodyDiv.innerHTML = html;
+    updateBoundaryText(cameraName);
+  } catch(e) {
+    bodyDiv.innerHTML = '<div class="text-danger">Error loading boundaries.</div>';
+    console.error(e);
+  }
+}
+function updateBoundaryHiddenInput(cameraName) {
+  const checkboxes = document.querySelectorAll(`input[name="boundary_${cameraName}"]:checked`);
+  const selected = Array.from(checkboxes).map(cb => cb.value);
+  const hidden = document.getElementById(`boundaries_hidden_${cameraName}`);
+  if (hidden) hidden.value = selected.join(',');
+  updateBoundaryText(cameraName);
+}
+function updateBoundaryText(cameraName) {
+  const count = document.querySelectorAll(`input[name="boundary_${cameraName}"]:checked`).length;
+  const span = document.getElementById(`boundaryText_${cameraName}`);
+  if (span) span.innerText = count ? count + ' boundary(s) selected' : 'Select Boundaries';
+}
+function openBoundaryEditor(cameraName) {
+  window.open(`/camera-boundary-editor/${encodeURIComponent(cameraName)}/`, '_blank', 'width=1200,height=800,resizable=yes,scrollbars=yes');
+}
+window.addEventListener('message', function(e) { if (e.data && e.data.type === 'boundarySaved') loadBoundariesForCamera(e.data.cameraName); });
+document.addEventListener('DOMContentLoaded', function() {
+  updateCameraText();
+  const selectedCameras = Array.from(document.querySelectorAll('input[name="cameras"]:checked')).map(cb => cb.value);
+  for (let cam of selectedCameras) addBoundarySelector(cam);
+});
+const boundaryStyle = document.createElement('style');
+boundaryStyle.textContent = `
+  .boundary-selector { border:1px solid #ddd; padding:15px; border-radius:5px; background:#f9f9f9; margin-bottom:15px; }
+  .boundary-multiselect { margin:10px 0; position:relative; }
+  .boundary-dropdown .dropdown-header { background:white; border:1px solid #ccc; padding:10px 12px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; border-radius:4px; }
+  .boundary-dropdown .dropdown-body { display:none; position:absolute; background:white; border:1px solid #ccc; z-index:1000; max-height:250px; overflow-y:auto; width:100%; border-radius:4px; }
+  .boundary-item { display:block; padding:8px 12px; cursor:pointer; border-bottom:1px solid #f0f0f0; }
+  .loading, .text-muted, .text-danger { padding:15px; text-align:center; }
+  .btn-cancel { background: #6c757d; color: white; border: none; padding: 12px 28px; border-radius: 7px; font-size: 0.93rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; transition: background 0.2s, transform 0.2s; }
+  .btn-cancel:hover { background: #5a6268; transform: translateY(-1px); color: white; text-decoration: none; }
+`;
+document.head.appendChild(boundaryStyle);
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function() {
+
+    // =========================
+    // Employee Presence Chart
+    // =========================
+
+    const chartCanvas =
+        document.getElementById("employeeChart");
+
+    if (chartCanvas) {
+
+        new Chart(chartCanvas, {
+
+            type: "doughnut",
+
+            data: {
+
+                labels: [
+                    "Employee Present",
+                    "No Employee"
+                ],
+
+                datasets: [{
+
+                    data: [
+                        {{ employee_minutes }},
+                        {{ no_employee_minutes }}
+                    ],
+
+                    backgroundColor: [
+                        "#800020",
+                        "#007bff"
+                    ]
+                }]
+            },
+
+            options: {
+
+                responsive: true,
+
+                plugins: {
+
+                    tooltip: {
+
+                        callbacks: {
+
+                            label: function(context) {
+
+                                let mins = context.raw;
+
+                                let hrs = Math.floor(mins / 60);
+
+                                let rem = mins % 60;
+
+                                return context.label +
+                                       " : " +
+                                       hrs +
+                                       " hr " +
+                                       rem +
+                                       " min";
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // =========================
+    // Shift Analysis Chart
+    // =========================
+
+    const shiftCtx =
+        document.getElementById("shiftChart");
+
+    if (shiftCtx) {
+
+        new Chart(shiftCtx, {
+
+            type: "doughnut",
+
+            data: {
+
+                labels: [
+                    "Shift I",
+                    "Shift II",
+                    "Shift III"
+                ],
+
+                datasets: [{
+
+                    data: [
+                        {{ shift1_minutes }},
+                        {{ shift2_minutes }},
+                        {{ shift3_minutes }}
+                    ],
+
+                    backgroundColor: [
+                        "#800020",
+                        "#007bff",
+                        "#28a745"
+                    ]
+                }]
+            },
+
+            options: {
+
+                responsive: true,
+
+                plugins: {
+
+                    tooltip: {
+
+                        callbacks: {
+
+                            label: function(context) {
+
+                                let mins = context.raw;
+
+                                let hrs = Math.floor(mins / 60);
+
+                                let rem = mins % 60;
+
+                                return context.label +
+                                       " : " +
+                                       hrs +
+                                       " hr " +
+                                       rem +
+                                       " min";
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+});
+
+</script>
+{% endblock %}

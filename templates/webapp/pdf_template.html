@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Violation Report</title>
+
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 22px;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 11px;
+            color: #1a1a1a;
+            background: #f5f0f1;
+        }
+
+        .page-card {
+            background: #ffffff;
+            border: 1px solid #e8d4d9;
+            padding: 0;
+        }
+
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .accent {
+            width: 6px;
+            background: #7b0323;
+        }
+
+        .header-main {
+            padding: 18px 20px;
+            background: #ffffff;
+        }
+
+        .header-main table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .icon-box {
+            width: 42px;
+            height: 34px;
+            padding: 0;
+            text-align: center;
+            vertical-align: middle;
+            background: #f9edf0;
+            color: #7b0323;
+            border: 1px solid #e8d4d9;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .title-cell { 
+            padding-top: 0;
+            padding-bottom: 0;
+            padding-right: 0;
+        }
+
+        h1 {
+            margin: 0;
+            color: #7b0323;
+            font-size: 22px;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .subtitle {
+            margin-top: 4px;
+            color: #6b6b6b;
+            font-size: 11px;
+        }
+
+        .report-info {
+            padding: 10px 16px;
+             border-top: 1px solid #e8d4d9;
+            border-bottom: 1px solid #e8d4d9;
+            color: #6b6b6b;
+            font-size: 10px;
+        }
+
+        .label {
+            display: inline;
+            color: #7b0323;
+            font-size: 8px;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+
+        .value {
+            color: #1a1a1a;
+            font-size: 11px;
+            font-weight: 600;
+            margin-right: 20px;
+        }
+
+        .section-head {
+            padding: 13px 16px;
+            background: #f9edf0;
+            border-bottom: 1px solid #e8d4d9;
+            color: #7b0323;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .table-wrap {
+            padding: 0 16px 16px;
+        }
+
+        table.records {
+            width: 100%;
+            border-collapse: collapse;
+            background: #ffffff;
+        }
+
+        .records th {
+            padding: 10px 12px;
+            text-align: left;
+            color: #7b0323;
+            background: #ffffff;
+            border-bottom: 2px solid #e8d4d9;
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+
+        .records td {
+            padding: 11px 12px;
+            border-bottom: 1px solid #f3e4e8;
+            color: #1a1a1a;
+            vertical-align: middle;
+        }
+
+        .records tr:nth-child(even) td {
+            background: #fff8fa;
+        }
+
+        .photo-cell {
+            width: 86px;
+            text-align: center;
+        }
+
+        img {
+            width: 64px;
+            height: 46px;
+            object-fit: cover;
+            border: 1px solid #e8d4d9;
+        }
+
+        .pill {
+            display: inline-block;
+            padding: 4px 10px;
+            background: #f9edf0;
+            color: #7b0323;
+            border: 1px solid #e8d4d9;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .person-id {
+            color: #7b0323;
+            font-weight: 700;
+        }
+
+        .time {
+            color: #6b6b6b;
+            white-space: nowrap;
+        }
+
+        .muted {
+            color: #8a7c81;
+        }
+
+        .empty-state {
+            padding: 30px 10px;
+            text-align: center;
+            color: #9a7278;
+            background: #fff8fa;
+            font-weight: 700;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page-card">
+        <table class="header-table">
+            <tr>
+                <td class="accent"></td>
+                <td class="header-main">
+                    <table>
+                        <tr>
+                             <td class="title-cell">
+                                <h1>Violation Records</h1>
+                                <div class="subtitle">Unauthorized activity report</div>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+
+        <div class="report-info">
+            <div class="pb-3">
+            <span class="label">Report Type:</span>
+            <span class="value">Violation Detection</span>
+            </div>
+            <div class="pb-3">
+            <span class="label">Total Records:</span>
+            <span class="value">{{ records|length }}</span>
+            </div>
+        </div>
+
+        <div class="section-head">Detection Records</div>
+
+        <div class="table-wrap">
+            <table class="records">
+                <thead>
+                    <tr>
+                        <th class="photo-cell">Photo</th>
+                        <th>Rule Type</th>
+                        <th>Emp ID / Person</th>
+                        <th>Location</th>
+                        <th>Date &amp; Time</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for r in records %}
+                    <tr>
+                        <td class="photo-cell">
+                            {% if r.image_path %}
+                                <img src="{{ MEDIA_ROOT }}/{{ r.image_path }}" alt="Detection image">
+                            {% else %}
+                                <span class="muted">No Image</span>
+                            {% endif %}
+                        </td>
+                        <td><span class="pill">{{ r.rule_category }}</span></td>
+                        <td>
+                            <span class="person-id">
+                                {% if r.employee_id %}
+                                    {{ r.employee_id }}
+                                {% else %}
+                                    {{ r.unauthorized_person|default:"UNKNOWN" }}
+                                {% endif %}
+                            </span>
+                        </td>
+                        <td>{{ r.place }}</td>
+                        <td><span class="time">{{ r.created_at|date:"Y-m-d H:i" }}</span></td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td class="empty-state" colspan="5">No records found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

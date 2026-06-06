@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 12px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #000; padding: 6px; text-align: center; vertical-align: middle; }
+        img { max-width: 60px; max-height: 45px; }
+        h2 { text-align: center; color: #722f37; }
+        .filter-info { text-align: center; margin-bottom: 15px; font-size: 11px; color: #666; }
+        .page-break { page-break-before: always; }
+    </style>
+</head>
+<body>
+
+<h2>📋 Work Detection Report</h2>
+
+{% if request.GET.place or request.GET.date_from or request.GET.date_to %}
+<div class="filter-info">
+    Filtered by:
+    {% if request.GET.place %} Camera: {{ request.GET.place }} |{% endif %}
+    {% if request.GET.date_from %} From: {{ request.GET.date_from }} |{% endif %}
+    {% if request.GET.date_to %} To: {{ request.GET.date_to }} |{% endif %}
+</div>
+{% endif %}
+
+<table>
+    <thead>
+        <tr>
+            <th>Image</th>
+            <th>Place</th>
+            <th>Date &amp; Time</th>
+            <th>Duration</th>
+            <th>Detected (min)</th>
+            <th>Required (min)</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for r in records %}
+        <tr>
+            <td style="text-align: center;">
+                {% if r.image_base64 %}
+                    <img src="data:image/jpeg;base64,{{ r.image_base64 }}">
+                {% else %}
+                    —
+                {% endif %}
+            </td>
+            <td style="text-align: center;">{{ r.place|default:'—' }}</td>
+            <td style="text-align: center;">{{ r.created_at|date:"Y-m-d H:i" }}</td>
+            <td style="text-align: center;">{{ r.time|default:'—' }}</td>
+            <td style="text-align: center;">{{ r.detected_count|default:'0' }}</td>
+            <td style="text-align: center;">{{ r.total_emp|default:'0' }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6" style="text-align: center;">No records found for the selected filters.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+</body>
+</html>

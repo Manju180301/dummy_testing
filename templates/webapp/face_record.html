@@ -1,0 +1,356 @@
+{% extends "webapp/layouts/base.html" %}
+{% block content %}
+{% load static %}
+  
+    <div class="container-fluid main-layout py-3 bg-light">
+        <!-- Next Step Instruction -->
+        <div class="d-flex justify-content-center mb-3" id="next_step">
+            <div id="instruction-box" class="px-4 py-2 bg-white shadow rounded d-flex align-items-center">
+            <span class="fw-semibold text-secondary">Next Step:</span>
+            <span id="command" class="ms-2 fw-bold text-primary">Look Up</span>
+            <i id="orientationCommandIcon" class="ms-2 fw-bold fs-5 text-primary">↑</i>
+            </div>
+        </div>
+
+        <!-- Camera Canvas Area -->
+        <div class="d-flex flex-column align-items-center mx-auto" style="max-width:580px;" id="video_tag">
+            <video class="input_video d-none"></video>
+            <div class="ratio ratio-4x3 w-75">
+            <canvas class="output_canvas border rounded shadow" width="800" height="600"></canvas>
+            </div>
+        </div>
+
+        <!-- Status Row -->
+        <div class="status-row mt-4" id="current_step">
+            <div class="container">
+            <div class="row justify-content-center g-3">
+                <div class="col-auto">
+                <div class="status-box bg-white p-3 rounded shadow text-center">
+                    <h6 class="text-danger fw-bold mb-1">Current Orientation</h6>
+                    <p id="command2" class="fw-bold mb-0">Looking Straight</p>
+                </div>
+                </div>
+                <div class="col-auto">
+                <div class="status-box bg-white p-3 rounded shadow text-center">
+                    <h6 class="text-danger fw-bold mb-1">Face Alignment</h6>
+                    <p id="command1" class="fw-bold mb-0">Waiting...</p>
+                </div>
+                </div>
+            </div>
+            </div>
+        </div>
+
+        <!-- Completion Section (hidden until finished) -->
+         <div class="row mt-3">
+          <div class="col-12 d-flex justify-content-center">
+            <div id="completionMessage" class="d-flex flex-column align-items-center">
+              <script src="https://unpkg.com/@dotlottie/player-component@latest/dist/dotlottie-player.mjs" type="module"></script>
+
+              <dotlottie-player id="rocket"
+                src="https://lottie.host/17e58a85-cd37-48cd-8f50-f7c4c2a851ac/ODuUdQ8dtR.json"
+                background="transparent" speed="1" class="d-none" style="width:300px;height:300px;" loop autoplay></dotlottie-player>
+
+              <dotlottie-player id="robot"
+                src="https://lottie.host/73d1e6ea-6f6e-4d71-b113-b8184cc7d046/zK1auD6ZXq.json"
+                background="transparent" speed="1" class="d-none" style="width:240px;height:240px;" loop autoplay></dotlottie-player>
+
+              <a class="btn btn-lg d-none" id="home" href="{%url 'index' %}" style="background:#1677ff; color:#fff; border-radius:12px; padding:12px 26px; font-weight:700; text-decoration:none;">
+                Home
+              </a>
+
+              <p id="h3" style="font-size:18px; margin:6px 0 0;" class="d-none">Please hold each pose briefly. Processing will finish automatically...</p>
+            </div>
+          </div>
+        </div>
+    </div>
+
+    <!-- Hidden debug -->
+    <div style="display:none">
+        <div id="noseCoordinates">Nose Coordinates: x=0, y=0</div>
+        <div id="faceWidth">Face Width: 0</div>
+        <div id="faceHeight">Face Height: 0</div>
+    </div>
+
+  <!-- Mediapipe libs -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh"></script>
+
+  <!-- (your JS remains unchanged) -->
+  <script>
+    // === basic variables & helpers ===
+    const videoElement = document.getElementsByClassName("input_video")[0];
+    const canvasElement = document.getElementsByClassName("output_canvas")[0];
+    const canvasCtx = canvasElement.getContext("2d");
+
+    const roi = {
+      x: canvasElement.width * 0.265,
+      y: canvasElement.height * 0.2,
+      width: canvasElement.width * 0.47,
+      height: canvasElement.height * 0.55,
+    };
+
+    let currentState = "Look Up";
+    let stateStartTime = new Date();
+    const requiredDuration = 500; // ms
+
+    let mediaRecorder;
+    let recordedChunks = [];
+    let isRecording = false;
+
+    // function captureImage(poseName) {
+    //   canvasElement.toBlob(function(blob) {
+    //     const fileName = poseName.replace(/ /g, "_") + ".png";
+    //     const link = document.createElement("a");
+    //     link.href = URL.createObjectURL(blob);
+    //     link.download = fileName;
+    //     link.click();
+    //     URL.revokeObjectURL(link.href);
+    //   }, "image/png");
+    // } 
+
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+    }
+    const csrftoken = getCookie('csrftoken');
+
+    // start camera
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then((stream) => {
+        videoElement.srcObject = stream;
+        window.localStream = stream;
+
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.ondataavailable = function (event) {
+          if (event.data.size > 0) recordedChunks.push(event.data);
+        };
+
+        mediaRecorder.onstop = function () {
+          const blob = new Blob(recordedChunks, { type: "video/webm" });
+
+          const formData = new FormData();
+          const employeeName = "{{ emp_name|escapejs }}";
+          const employeeId = "{{ emp_id|escapejs }}";
+          formData.append("video", blob, (employeeName || "user") + ".webm");
+          formData.append("employee_name", employeeName);
+          formData.append("employee_id", employeeId);
+            
+          $.ajax({
+                url: "{% url 'upload_face_video' %}",
+                type: "POST",
+                data: formData,
+                processData: false, 
+                contentType: false,
+                headers: { 'X-CSRFToken': csrftoken },
+                success: function(data) {
+                    console.log("Upload complete", data);
+                    showCompletionUI();
+                },
+                error: function(xhr, status, error) {
+                    console.error("Upload error:", error);
+                    // optionally show completion UI even on error
+                    // showCompletionUI();
+                }
+            });
+
+          try { localStream.getVideoTracks()[0].stop(); } catch (e) {}
+          videoElement.src = "";
+          recordedChunks = [];
+        };
+      })
+      .catch((error) => {
+        console.error('Media capture error:', error);
+        alert('Unable to access camera. Please allow camera access and reload.');
+    });
+
+    function redirectToURL() {
+        document.getElementById("next_step").classList.add('d-none');
+        document.getElementById("video_tag").classList.add('d-none');
+        document.getElementById("current_step").classList.add('d-none');
+        document.getElementById("rocket").classList.remove('d-none');
+        document.getElementById("h3").classList.remove('d-none');
+    }
+
+    function showCompletionUI() {
+        document.getElementById("rocket").classList.add('d-none');
+        document.getElementById("h3").classList.add('d-none');
+        document.getElementById("robot").classList.remove('d-none');
+        document.getElementById("home").classList.remove('d-none');
+    }
+
+    function checkFaceOrientation(noseTip) {
+      const upThreshold = 290;
+      const downThreshold = 370;
+      const leftThreshold = 450;
+      const rightThreshold = 350;
+      const noseX = noseTip.x * canvasElement.width;
+      const noseY = noseTip.y * canvasElement.height;
+
+      if (noseY < upThreshold) return "Look Up";
+      if (noseY > downThreshold) return "Look Down";
+      if (noseX > leftThreshold) return "Look Left";
+      if (noseX < rightThreshold) return "Look Right";
+      return "Look Straight";
+    }
+
+    function drawROI(color) {
+      canvasCtx.beginPath();
+      canvasCtx.rect(roi.x, roi.y, roi.width, roi.height);
+      canvasCtx.strokeStyle = color;
+      canvasCtx.lineWidth = 3;
+      canvasCtx.stroke();
+    }
+
+    /* rest of your face processing code (unchanged) */
+    function calculateDistance(p1, p2) {
+      return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+    }
+
+    function calculateFaceDimensions(landmarks) {
+      const widthLandmark1 = 234, widthLandmark2 = 454;
+      const heightLandmark1 = 152, heightLandmark2 = 10;
+      const width = calculateDistance(landmarks[widthLandmark1], landmarks[widthLandmark2]);
+      const height = calculateDistance(landmarks[heightLandmark1], landmarks[heightLandmark2]);
+      return { width, height };
+    }
+
+    function calculateBoundingBox(landmarks) {
+      let minX = Infinity, minY = Infinity, maxX = 0, maxY = 0;
+      landmarks.forEach(l => {
+        minX = Math.min(minX, l.x * canvasElement.width);
+        maxX = Math.max(maxX, l.x * canvasElement.width);
+        minY = Math.min(minY, l.y * canvasElement.height);
+        maxY = Math.max(maxY, l.y * canvasElement.height);
+      });
+      return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+    }
+
+    function changeOrientationIcon(orientation) {
+      const orientationCommandIcon = document.getElementById("orientationCommandIcon");
+      if (!orientationCommandIcon) return;
+      switch (orientation) {
+        case "Look Up": orientationCommandIcon.innerText = "↑"; break;
+        case "Look Down": orientationCommandIcon.innerText = "↓"; break;
+        case "Look Right": orientationCommandIcon.innerText = "→"; break;
+        case "Look Left": orientationCommandIcon.innerText = "←"; break;
+        default: orientationCommandIcon.innerText = "👁️";
+      }
+    }
+
+    function drawResult(results) {
+      canvasCtx.save();
+      canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+      canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+      drawROI("red");
+
+      if (!results.multiFaceLandmarks) {
+        canvasCtx.restore();
+        return;
+      }
+
+      if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 1) {
+        alert("Another face detected. Please ensure only one face is in view.");
+        window.location.reload();
+        return;
+      }
+
+      for (const landmarks of results.multiFaceLandmarks) {
+        const faceDimensions = calculateFaceDimensions(landmarks);
+        const faceWidth = faceDimensions.width * canvasElement.width;
+        const faceHeight = faceDimensions.height * canvasElement.height;
+        const bbox = calculateBoundingBox(landmarks);
+
+        document.getElementById("faceWidth").textContent = `Face Width: ${faceWidth.toFixed(2)}`;
+        document.getElementById("faceHeight").textContent = `Face Height: ${faceHeight.toFixed(2)}`;
+
+        if (faceWidth < roi.width * 0.45 && faceHeight < roi.height * 0.45) {
+          document.getElementById("command1").textContent = "Face Alignment: Come Closer";
+          document.getElementById("command1").style.color = "red";
+          document.getElementById("command2").innerText = "Current Orientation: No face detected";
+          drawROI("red");
+        } else if (faceWidth > roi.width * 0.51 && faceHeight > roi.height * 0.51) {
+          document.getElementById("command1").textContent = "Face Alignment: Move Back";
+          document.getElementById("command1").style.color = "red";
+          document.getElementById("command2").innerText = "Current Orientation: No face detected";
+          drawROI("red");
+        } else {
+          document.getElementById("command1").textContent = "Face Alignment: Success";
+          document.getElementById("command1").style.color = "green";
+
+          const noseTip = landmarks[1];
+          const noseX = noseTip.x * canvasElement.width;
+          const noseY = noseTip.y * canvasElement.height;
+          document.getElementById("noseCoordinates").innerText = `Nose Coordinates: x=${noseX.toFixed(2)}, y=${noseY.toFixed(2)}`;
+          drawROI("green");
+
+          if (noseX >= roi.x && noseX <= roi.x + roi.width && noseY >= roi.y && noseY <= roi.y + roi.height) {
+            if (currentState !== "Task Completed" && !isRecording) {
+              try { mediaRecorder.start(); } catch (e) { console.warn(e); }
+              isRecording = true;
+            }
+
+            const currentOrientation = checkFaceOrientation(noseTip);
+            changeOrientationIcon(currentOrientation);
+
+            const orientText = "Current Orientation: " + currentOrientation.replace("Look ", "Looking ");
+            document.getElementById("command2").innerText = orientText;
+
+            if (currentOrientation === currentState) {
+              if (new Date() - stateStartTime >= requiredDuration) {
+                switch (currentState) {
+                  case "Look Up": currentState = "Look Down"; break;
+                  case "Look Down": currentState = "Look Right"; break;
+                  case "Look Right": currentState = "Look Left"; break;
+                  case "Look Left": currentState = "Task Completed"; break;
+                }
+                stateStartTime = new Date();
+              }
+            } else {
+              stateStartTime = new Date();
+            }
+
+            document.getElementById("command").innerText = currentState;
+
+            if (currentState === "Task Completed") {
+              document.getElementById("command").innerText = "All Steps Completed ✅";
+              if (isRecording) {
+                try { mediaRecorder.stop(); } catch (e) { console.warn(e); }
+                isRecording = false;
+                try { camera.stop(); } catch (e) {}
+                try { videoElement.srcObject = null; } catch (e) {}
+
+                const canvasEl = document.querySelector(".canvas-wrap");
+                if (canvasEl) canvasEl.style.display = "none";
+                const comp = document.getElementById("completionMessage");
+                if (comp) comp.style.display = "flex";
+                redirectToURL();
+              }
+            }
+
+            drawConnectors(canvasCtx, landmarks, FACEMESH_TESSELATION, { color: "#C0C0C070", lineWidth: 1 });
+            drawLandmarks(canvasCtx, landmarks, { color: "#E0FFFF", radius: 1 });
+          } else {
+            drawROI("red");
+          }
+        }
+      }
+      canvasCtx.restore();
+    }
+
+    const faceMesh = new FaceMesh({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}` });
+    faceMesh.setOptions({ maxNumFaces: 2, refineLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+    faceMesh.onResults(drawResult);
+
+    const camera = new Camera(videoElement, {
+      onFrame: async () => {
+        await faceMesh.send({ image: videoElement });
+      }
+    });
+
+    camera.start();
+  </script>
+  
+{% endblock  %}
