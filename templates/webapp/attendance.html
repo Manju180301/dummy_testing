@@ -1,0 +1,168 @@
+{% extends "webapp/layouts/base.html" %}
+{% load static %}
+{% block content %}
+<style>
+  .count-box{
+    background:#8b002f;
+    color:#fff;
+    font-size:15px;
+    font-weight:400;
+    text-align:center;
+    padding:10px;
+    border-radius:10px;
+    min-height:40px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+</style>
+
+<div class="container mt-4 attendance_page_code">
+  <div class="search-box">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="attendance_headning">
+          <h3 class="mb-3">Attendance</h3>
+        </div>
+      </div>
+    </div>
+
+    <!-- Date Search -->
+    <form method="get" class="d-flex gap-3 mb-4">
+      <input type="date" name="date" value="{{ selected_date }}" class="form-control" required />
+      <button class="btn btn-search px-4">Search</button>
+
+      <a href="{% url 'attendance_csv' %}?date={{ selected_date }}"
+       class="btn btn-search px-4">
+        Download CSV
+      </a>
+
+    </form>
+  </div>
+  <div class="row mb-3">
+      <div class="col-md-6">
+          <div class="count-box">
+              Present Count : {{ present_count }}
+          </div>
+      </div>
+
+      <div class="col-md-6">
+          <div class="count-box">
+              Absent Count : {{ absent_count }}
+          </div>
+      </div>
+  </div>
+
+  <div class="card shadow-sm att-card">
+    <div class="card-body p-0 overflow-auto">
+      <table class="table table-bordered mb-0">
+        <thead>
+          <tr>
+            <th>S.No</th>
+            <th>Image</th>
+            <th>Emp ID</th>
+            <th>Emp Name</th>
+            <th>Check In</th>
+            <th>Check Out</th>
+            <th>Total Hours</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in attendance %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+
+            <td>
+              {% if row.image %}
+                {% if OS_TYPE == "Windows" %}
+                    <img src="{{ MEDIA_URL }}{{ row.image }}" class="att-img" />
+                {% else %}
+                    <img src="/media/{{ row.image }}" class="att-img" />
+                {% endif %}
+              {% else %}
+              <span>-</span>
+              {% endif %}
+            </td>
+
+            <td>{{ row.emp_id }}</td>
+            <td>{{ row.emp_name }}</td>
+
+            <!-- Check In -->
+            <td>
+              <div class="time">
+                {{ row.check_in_time|date:"H:i:s" }}
+              </div>
+              <div class="cam">
+                {{ row.check_in_cam }}
+              </div>
+            </td>
+
+            <!-- Check Out -->
+            <td>
+              {% if row.check_out_time %}
+              <div class="time">
+                {{ row.check_out_time|date:"H:i:s" }}
+              </div>
+              <div class="cam">
+                {{ row.check_out_cam }}
+              </div>
+              {% else %}
+              <span class="text-muted">—</span>
+              {% endif %}
+            </td>
+
+            <td>
+              {{ row.total_hours }}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="text-center text-muted">
+              No attendance data found
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+
+      </table>
+    </div>
+  </div>
+
+  <div class="card shadow-sm mt-4">
+      <div class="card-header">
+          <h5>Absent Employees</h5>
+      </div>
+
+      <div class="card-body p-0">
+          <table class="table table-bordered">
+              <thead>
+                  <tr>
+                      <th>S.No</th>
+                      <th>Emp ID</th>
+                      <th>Emp Name</th>
+                  </tr>
+              </thead>
+
+              <tbody>
+                  {% for emp in absent_employees %}
+                  <tr>
+                      <td>{{ forloop.counter }}</td>
+                      <td>{{ emp.emp_id }}</td>
+                      <td>{{ emp.emp_name }}</td>
+                  </tr>
+                  {% empty %}
+                  <tr>
+                      <td colspan="3" class="text-center">
+                          No absent employees
+                      </td>
+                  </tr>
+                  {% endfor %}
+              </tbody>
+          </table>
+      </div>
+  </div>
+
+</div>
+
+{% endblock %}

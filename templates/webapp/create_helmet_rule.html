@@ -1,0 +1,150 @@
+{% extends "webapp/layouts/base.html" %}
+{% block content %}
+
+
+<div class="container crete_helmet_rule_page">
+  <section class="brood_comes_header_card">
+    <div class="row">
+      <div class="col-md-8">
+        <div class="metting_rules">
+          <h2>
+            <i class="ti ti-shield-check rule-icon"></i> Helmet Safety Rule
+          </h2>
+        </div>
+      </div>
+      <div class="col-md-4 text-end">
+        <a href="{% url 'create_rule' %}" class="save-btn">Back</a>
+      </div>
+    </div>
+  </section>
+
+
+  <div class="rule-form">
+    <form method="POST">
+      {% csrf_token %}
+
+      <div class="row">
+        <div class="col-md-4">
+          <div class="form-group">
+            <label>Head Email</label>
+            <input type="email" name="head_email"    placeholder="Your Email" required />
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="form-group">
+            <label>Status</label>
+            <select name="active">
+              <option value="true">Active</option>
+              <option value="false">Inactive</option>
+            </select>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="form-group">
+            <label>Place (Camera)</label>
+            <div class="multi-dropdown" id="camDD">
+              <div class="dropdown-header" onclick="toggleDD()">
+                Select Camera(s) <i class="ti ti-chevron-down"></i>
+              </div>
+              <div class="dropdown-body">
+                {% for cam in cameras %}
+                <label class="item">
+                  <input type="checkbox" name="place" value="{{ cam }}" />
+                  <span>{{ cam }}</span>
+                </label>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button class="save-btn">Save Helmet Rule</button>
+    </form>
+  </div>
+
+  <table class="table table-bordered mb-0">
+    <thead>
+      <tr>
+        <th>Camera</th>
+        <th>Status</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    {% for key, r in rules.items %}
+    <tr>
+      <td>{{ r.place|join:', ' }}</td>
+      <td>
+        {% comment %} {% if r.active %}
+        <span class="status-active">Active</span>
+        {% else %}
+        <span class="status-inactive">Inactive</span>
+        {% endif %}
+
+        <a class="action-link" href="{% url 'toggle_helmet_rule' key %}">
+          {% if r.active %}
+          Deactivate
+          {% else %}
+          Activate
+          {% endif %}
+        </a> {% endcomment %}
+
+        {% if r.active %}
+        <span style="color:green;font-weight:600">ACTIVE</span>
+        <span class="sep">|</span>
+        {% else %}
+        <span style="color:red;font-weight:600">INACTIVE</span>
+        <span class="sep">|</span>
+        {% endif %}
+
+        <a class="action-link" href="{% url 'toggle_helmet_rule' key %}">
+          {% if r.active %}
+          <!-- tabler icons power-off (deactivate) -->
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path d="M7 6a7.75 7.75 0 1 0 10 0" />
+            <path d="M12 4l0 8" />
+          </svg>
+          {% else %}
+          <!-- tabler icons power (activate) -->
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path d="M7 6a7.75 7.75 0 1 0 10 0" />
+            <path d="M12 4l0 8" />
+          </svg>
+          {% endif %}
+        </a>
+      </td>
+      <td>
+        <a class="action-link" style="color:red" href="{% url 'delete_helmet_rule' key %}">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path d="M4 7l16 0" />
+            <path d="M10 11l0 6" />
+            <path d="M14 11l0 6" />
+            <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+            <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+          </svg>
+        </a>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+<script>
+  function toggleDD() {
+    const body = document.querySelector('.dropdown-body')
+    body.style.display = body.style.display === 'block' ? 'none' : 'block'
+  }
+
+  document.addEventListener('click', function (e) {
+    const dd = document.getElementById('camDD')
+    if (!dd.contains(e.target)) {
+      document.querySelector('.dropdown-body').style.display = 'none'
+    }
+  })
+</script>
+{% endblock %}

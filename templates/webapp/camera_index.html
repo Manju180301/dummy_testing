@@ -1,0 +1,85 @@
+{% extends "webapp/layouts/base.html" %}
+{% load static %}
+{% block content %}
+
+
+
+<section class="camera_index_page">
+    <div class="container-fluid">
+        <div class="camera-page-header">
+            <div>
+                <span class="camera-eyebrow">Live Monitoring</span>
+                <h2><i class="ti ti-camera"></i> CCTV Viewer</h2>
+            </div>
+            <div class="camera-count-pill">
+                <i class="ti ti-broadcast"></i>
+                <span>{{ camera_names|length }} {% if camera_names|length == 1 %}Camera{% else %}Cameras{% endif %} Connected</span>
+            </div>
+        </div>
+
+        {% if camera_names %}
+        <div class="camera-shell {% if camera_names|length == 1 %}single-camera{% endif %}">
+            <div class="camera-view-panel">
+                <div class="camera-view-header">
+                    <div>
+                        <small>Selected Camera</small>
+                        <strong id="selectedCameraName">
+                            {% for name in camera_names %}{% if forloop.first %}{{ name }}{% endif %}{% endfor %}
+                        </strong>
+                    </div>
+                    <span class="live-badge"><i class="ti ti-point-filled"></i> Live</span>
+                </div>
+
+                <div class="camera-view">
+                    {% for name in camera_names %}
+                    {% if forloop.first %}
+                    <img id="cameraFeed" src="/video_feed/{{ name }}/" alt="{{ name }} live camera feed"
+                        data-initial-camera="{{ name }}">
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            {% if camera_names|length > 1 %}
+            <aside class="camera-list-panel">
+                <div class="camera-list-heading">
+                    <h4>Camera List</h4>
+                    <span>{{ camera_names|length }} devices</span>
+                </div>
+                <div class="camera-list">
+                    {% for name in camera_names %}
+                    <button type="button" class="{% if forloop.first %}active{% endif %}" onclick="loadCamera('{{ name|escapejs }}', this)">
+                        <span class="camera-dot"></span>
+                        <span>{{ name }}</span>
+                        <i class="ti ti-chevron-right"></i>
+                    </button>
+                    {% endfor %}
+                </div>
+            </aside>
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="no-camera-state">
+            <span class="no-camera-icon"><i class="ti ti-camera-off"></i></span>
+            <h3>No Camera Connected</h3>
+            <p>Connect at least one CCTV stream to start live monitoring.</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+<script>
+    function loadCamera(name, button) {
+        const img = document.getElementById("cameraFeed");
+        const selectedName = document.getElementById("selectedCameraName");
+        if (!img) return;
+
+        img.src = `/video_feed/${encodeURIComponent(name)}/`;
+        if (selectedName) selectedName.textContent = name;
+
+        document.querySelectorAll(".camera-list button").forEach((item) => {
+            item.classList.toggle("active", item === button);
+        });
+    }
+</script>
+
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends 'webapp/layouts/base.html' %}
+{% block content %}
+  {% load static %}
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+ 
+   <div class="container track_page_div">
+    <div class="content-area">
+      <div class="content-card">
+        <div class="row">
+          <div class="col-md-12">
+            <h2 class="content-title">Timeline Report</h2>
+            <p class="content-subtitle">Fill out the below details</p>
+          </div>
+        </div>
+        <form method="POST" action="{% url 'track_employee' %}" class="row mb-5">
+          {% csrf_token %}
+          <div class="col-md-5">
+            <input type="text" name="emp_id" class="form-control" placeholder="Employee ID" required />
+          </div>
+          <div class="col-md-5">
+            <input type="date" name="date" class="form-control" value="{{ today|date:'Y-m-d' }}" required />
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-custom w-100">Submit</button>
+          </div>
+        </form>
+        {% if searched_emp_id %}
+          <div class="mt-3 mb-4 text-center">
+            <span class="badge bg-default">{{ searched_emp_id }} –{{ searched_emp_name }} –{{ searched_date|date:'d/m/Y' }}</span>
+          </div>
+        {% endif %}
+        <!-- ===== TIMELINE ===== -->
+        <div class="timeline-section">
+          <div class="timeline-row">
+            {% for r in results %}
+              <div class="timeline-item">
+                <div class="timeline-content">
+                  <div class="timeline-image-wrapper">
+                    <div class="timeline-badge">{{ forloop.counter }}</div>
+
+                    <div class="timeline-image">
+                      <!--<img src="/media/{{ r.first_img }}" alt="capture" />-->
+                      {% if OS_TYPE == "Windows" %}
+                          <img src="{{ MEDIA_URL }}{{ r.first_img }}" alt="capture">
+                      {% else %}
+                          <img src="/media/{{ r.first_img }}" alt="capture">
+                      {% endif %}
+                    </div>
+                  </div>
+
+                  <div class="timeline-location">{{ r.camera_name }}</div>
+
+                  <div class="timeline-time">
+                    <div class="time-first">First Capture: {{ r.first_time|date:'H:i:s' }}</div>
+
+                    {% if r.last_time %}
+                      <div class="time-last">Last Capture: {{ r.last_time|date:'H:i:s' }}</div>
+                    {% endif %}
+                  </div>
+                </div>
+
+                <div class="timeline-connector"></div>
+              </div>
+            {% empty %}
+              <p>No data found.</p>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <!-- Step 3: Initialize Flatpickr -->
+  <script>
+    // Simple date picker
+    flatpickr('#emp_id', {
+      dateFormat: 'Y-m-d',
+      altInput: true,
+      altFormat: 'F j, Y'
+    })
+  </script>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends 'webapp/layouts/base.html' %}
+{% load static %}
+{% block content %}
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
+
+  
+
+ <div class="container mt-4 employee_list_page">
+  <div
+    class="card employee_list_header_cards"
+  >
+    <h3 class="mb-0">Employees List</h3>
+
+    <form method="get" class="search-box">
+      <input
+        type="text"
+        name="q"
+        class="form-control"
+        placeholder="Search Emp ID"
+        value="{{ query }}"
+      />
+    </form>
+  </div>
+
+    <div class="card shadow-sm">
+      <div class="card-body p-0 overflow-auto">
+        <table class="table table-bordered mb-0">
+          <thead>
+            <tr>
+              <th>S.No</th>
+              <th>Image</th>
+              <th>Employee ID</th>
+              <th>Name</th>
+              <th>Department</th>
+              <th>Emp Type</th>
+              <th>Update</th>
+              <th>Delete</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for emp in employees %}
+              <tr>
+                <td>{{ forloop.counter }}</td>
+
+                <td>
+                  {% if emp.profile_pic %}
+                    <img src="{{ emp.profile_pic.url }}" class="emp-img" />
+                  {% else %}
+                    <img src="{% static 'img/default-user.png' %}" class="emp-img" />
+                  {% endif %}
+                </td>
+
+                <td>
+                  <a href="{% url 'employee_edit' emp.id %}">{{ emp.emp_id }}</a>
+                </td>
+
+                <td>{{ emp.emp_name }}</td>
+                <td>{{ emp.dept }}</td>
+                <td>{{ emp.emp_type }}</td>
+
+                <!-- Edit Icon -->
+                <td>
+                  <a href="{% url 'employee_edit' emp.id %}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil-square"></i></a>
+                </td>
+
+                <!-- Delete Icon -->
+                <td>
+                  <a href="{% url 'employee_delete' emp.id %}" class="btn btn-sm btn-outline-danger" title="Deactivate" onclick="return confirm('Deactivate this employee?')"><i class="bi bi-trash"></i></a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="8" class="text-center text-muted">No employees found</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+{% endblock %}

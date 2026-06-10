@@ -1,0 +1,510 @@
+from django.core.mail import EmailMessage
+from django.conf import settings
+from pathlib import Path
+from webapp.models import EmailSend
+import platform
+import os
+
+
+def save_email_log(**kwargs):
+    EmailSend.objects.create(**kwargs)
+
+def attach_image_if_exists(email, image_path):
+    """
+    Universal rule to attach image safely.
+    Works with:
+        ✔ recognized_cctv/...jpg
+        ✔ /media/recognized_cctv/...jpg
+        ✔ Full absolute path
+    """
+
+    if not image_path:
+        return
+
+    path_str = str(image_path)
+
+    # If already absolute path
+    p = Path(path_str)
+    if p.is_absolute() and p.exists():
+        email.attach_file(str(p))
+        return
+
+    # Remove '/media/' if present
+    if path_str.startswith(settings.MEDIA_URL):
+        path_str = path_str.replace(settings.MEDIA_URL, "", 1)
+
+    # Convert to filesystem path
+    full_path = Path(settings.MEDIA_ROOT) / path_str
+
+    if full_path.exists():
+        email.attach_file(str(full_path))
+
+        
+#----------------MEETING ALERT-------------------------
+def send_meeting_alert(
+    to_email,
+    place,
+    start_time,
+    end_time,
+    total,
+    present,
+    missing,
+    image_path=None,
+):
+    subject = "🚨Meeting Attendance Alert"
+
+    body = f"""
+Meeting Attendance Alert
+
+Place : {place}
+Time  : {start_time} - {end_time}
+
+Total Employees    : {total}
+Present Employees  : {present}
+
+Missing Employees:
+{", ".join(missing) if missing else "None"}
+"""
+
+    email = EmailMessage(
+        subject=subject,
+        body=body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[to_email]
+    )
+
+    if image_path and Path(image_path).exists():
+        email.attach_file(image_path)
+
+    # email.send(fail_silently=True)
+    save_email_log(
+        rule_category="Meeting Rule",
+        place=place,
+        total_emp=total,
+        present_emp=present,
+        missing_emp=", ".join(missing),
+        time=f"{start_time}-{end_time}",
+        image_path=image_path,
+    )
+
+
+#----------------ALLOWED PLACE ALERT-------------------------
+def send_allowed_place_alert(
+    to_email,
+    emp_id,
+    emp_name,
+    emp_dept,
+    allowed_dept,
+    place,
+    time_str,
+    image_path=None,
+    zone_type=None,
+    unauthorized_person=None,
+):
+    subject = "🚨Allowed Place Violation Alert"
+
+    body = f"""
+Allowed Place Violation Alert
+
+Zone Type : {zone_type}
+
+Employee  : {emp_id} - {emp_name}
+Employee Dept : {emp_dept}
+
+Allowed Department : {allowed_dept}
+Place : {place}
+Time  : {time_str}
+
+Unauthorized department employee entered restricted place.
+"""
+
+    email = EmailMessage(
+        subject=subject,
+        body=body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[to_email]
+    )
+
+    # attach_image_if_exists(email, image_path)
+
+    # if image_path:
+    #     if platform.system() == "Windows":
+    #         # Windows logic
+    #         if Path(image_path).exists():
+    #             email.attach_file(image_path)
+    #     else:
+    #         # Linux logic
+    #         attach_image_if_exists(email, image_path)
+    
+    if image_path:
+        try:
+            # remove starting /
+            clean_path = image_path.lstrip("/")
+
+            # convert to full path
+            full_path = os.path.join(settings.MEDIA_ROOT, clean_path)
+
+            #print("📸 Windows Full Path:", full_path)
+
+            if os.path.exists(full_path):
+                email.attach_file(full_path)
+            else:
+                print("❌ Image not found:", full_path)
+
+        except Exception as e:
+            print("❌ Image attach error:", e)
+
+    #email.send(fail_silently=False)
+    save_email_log(
+        rule_category="Allowed Place Rule",
+        place=place,
+        employee_id=emp_id,
+        employee_name=emp_name,
+        employee_dept=emp_dept,
+        unauthorized_person=unauthorized_person,
+        allowed_department=allowed_dept,
+        time=time_str,
+        image_path=image_path,
+        zone_type=zone_type ,
+        
+)
+
+
+#----------------RESTRICTED ZONE ALERT-------------------------
+def send_restricted_zone_alert(
+    to_email,
+    emp_id,
+    emp_name,
+    emp_dept,
+    place,
+    time_str,
+    image_path=None,
+    zone_type=None,
+    unauthorized_person=None, #--new
+):
+    subject = "🚨Restricted Zone Violation Alert"
+
+    body = f"""
+Restricted Zone Alert
+Zone Type : {zone_type.upper()}
+
+Employee : {emp_id} - {emp_name}
+Department : {emp_dept}
+Place : {place}
+Time : {time_str}
+
+Unauthorized entry detected.
+"""
+
+    email = EmailMessage(
+        subject,
+        body,
+        settings.DEFAULT_FROM_EMAIL,
+        [to_email]
+    )
+
+
+    #attach_image_if_exists(email, image_path)
+
+    # if image_path:
+    #     if platform.system() == "Windows":
+    #         # Windows logic
+    #         if Path(image_path).exists():
+    #             email.attach_file(image_path)
+    #     else:
+    #         # Linux logic
+    #         attach_image_if_exists(email, image_path)
+    
+    if image_path:
+        try:
+            # remove starting /
+            clean_path = image_path.lstrip("/")
+
+            # convert to full path
+            full_path = os.path.join(settings.MEDIA_ROOT, clean_path)
+
+            #print("📸 Windows Full Path:", full_path)
+
+            if os.path.exists(full_path):
+                email.attach_file(full_path)
+            else:
+                print("❌ Image not found:", full_path)
+
+        except Exception as e:
+            print("❌ Image attach error:", e)
+
+    #email.send(fail_silently=False)
+    save_email_log(
+    rule_category="Restricted Zone Rule",
+    place=place,
+    employee_id=emp_id,
+    employee_name=emp_name,
+    employee_dept=emp_dept,
+    unauthorized_person=unauthorized_person,
+    zone_type=zone_type,
+    time=time_str,
+    image_path=image_path
+)
+
+# ----------- IN / OUT TIME ALERT MAIL -------------
+def send_inout_time_alert(
+    to_email,
+    employee,
+    violation_type,
+    violation_time,
+    image_path=None,
+    place=None
+):
+    subject = f"🚨In/Out Time Alert - {violation_type}"
+
+    body = f"""
+In / Out Time Rule Alert
+
+Violation Type : {violation_type}
+
+Employee ID    : {employee.emp_id}
+Employee Name  : {employee.emp_name}
+Department     : {employee.dept}
+
+Time           : {violation_time}
+
+Please take necessary action.
+"""
+
+    email = EmailMessage(
+        subject=subject,
+        body=body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[to_email]
+    )
+
+
+    # attach_image_if_exists(email, image_path)
+
+    if image_path:
+        if platform.system() == "Windows":
+            # Windows logic
+            if Path(image_path).exists():
+                email.attach_file(image_path)
+        else:
+            # Linux logic
+            attach_image_if_exists(email, image_path)
+
+    # email.send(fail_silently=False)
+    save_email_log(
+    rule_category="InOut Rule",
+    place=place,
+    employee_id=employee.emp_id,
+    employee_name=employee.emp_name,
+    employee_dept=employee.dept,
+    break_type=violation_type,
+    time=violation_time,
+    image_path=image_path
+)
+
+#--------------------UNKNOW PERSON ALERT--------------
+def send_unknown_alert(
+    to_email,
+    camera_name,
+    time_str,
+    image_path=None
+):
+    subject = "🚨 Unknown Person Detected"
+
+    body = f"""
+Unknown Person Alert
+
+Person        : UNKNOWN
+Camera        : {camera_name}
+Time          : {time_str}
+
+Please verify immediately.
+"""
+
+    email = EmailMessage(
+        subject,
+        body,
+        settings.DEFAULT_FROM_EMAIL,
+        [to_email]
+    )
+
+    
+    # attach_image_if_exists(email, image_path)
+
+    if image_path:
+        if platform.system() == "Windows":
+            # Windows logic
+            if Path(image_path).exists():
+                email.attach_file(image_path)
+        else:
+            # Linux logic
+            attach_image_if_exists(email, image_path)
+
+    #email.send(fail_silently=False)
+    save_email_log(
+        rule_category="Unknown Person",
+        place=camera_name,
+        time=time_str,
+        image_path=image_path,
+        person="UNKNOWN"
+)
+
+
+#--------------------PHONE USAGE ALERT--------------
+def send_phone_usage_alert(to_email, emp, place, time_str, image_path):
+    subject = "📵 Phone Usage Alert"
+
+    body = f"""
+Phone Usage Detected
+
+Employee : {emp.emp_id} - {emp.emp_name}
+Department : {emp.dept}
+
+Place : {place}
+Time  : {time_str}
+
+Phone usage detected during working hours.
+"""
+
+    email = EmailMessage(
+        subject,
+        body,
+        settings.DEFAULT_FROM_EMAIL,
+        [to_email]
+    )
+
+    # attach_image_if_exists(email, image_path)
+
+    if image_path:
+        if platform.system() == "Windows":
+            # Windows logic
+            if Path(image_path).exists():
+                email.attach_file(image_path)
+        else:
+            # Linux logic
+            attach_image_if_exists(email, image_path)
+
+    #email.send(fail_silently=False)
+    save_email_log(
+        rule_category="Phone Usage Rule",
+        place=place,
+        employee_id=emp.emp_id,
+        employee_name=emp.emp_name,
+        employee_dept=emp.dept,
+        time=time_str,
+        image_path=image_path
+    )
+
+
+#--------------------GROUP GATHERING ALERT--------------
+def send_group_gathering_alert(
+    to_email,
+    place,
+    detected_count,
+    allowed_count,
+    employees,
+    known_count,
+    unknown_count,
+    time_str,
+    image_path=None,
+):
+    subject = "🚨 Group Gathering Alert"
+
+    body = f"""
+Group Gathering Alert
+
+Place : {place}
+Allowed Close Count : {allowed_count}
+Detected Close People : {detected_count}
+
+Known Employees ({known_count}):
+{employees if employees else "None"}
+
+Unknown / Visitors : {unknown_count}
+
+Time : {time_str}
+"""
+
+    email = EmailMessage(
+        subject,
+        body,
+        settings.DEFAULT_FROM_EMAIL,
+        [to_email]
+    )
+
+    if image_path and Path(image_path).exists():
+        email.attach_file(image_path)
+
+    # email.send(fail_silently=False)
+
+    save_email_log(
+        rule_category="Group Gathering",
+        place=place,
+        detected_count=detected_count,
+        close_count=allowed_count,
+        known_employee=employees,
+        unknown_visitor=unknown_count,
+        time=time_str,
+        image_path=image_path,
+)
+
+#-----------------SAFETY RULE---------------------
+def send_helmet_alert(
+    to_email,
+    place,
+    time_str,
+    emp=None,
+    image_path=None
+):
+    subject = "🚨 Helmet Safety Violation Alert"
+
+    if emp:
+        emp_info = f"""
+Employee ID   : {emp.emp_id}
+Employee Name : {emp.emp_name}
+Department    : {emp.dept}
+"""
+    else:
+        emp_info = "Person : UNKNOWN / VISITOR\n"
+
+    body = f"""
+Helmet Safety Violation Detected
+
+{emp_info}
+Place : {place}
+Violation : Helmet NOT worn
+Time : {time_str}
+
+⚠️ This is a safety-critical violation.
+Please take immediate action.
+"""
+
+    email = EmailMessage(
+        subject,
+        body,
+        settings.DEFAULT_FROM_EMAIL,
+        [to_email]
+    )
+
+    # attach_image_if_exists(email, image_path)
+
+    if image_path:
+        if platform.system() == "Windows":
+            # Windows logic
+            if Path(image_path).exists():
+                email.attach_file(image_path)
+        else:
+            # Linux logic
+            attach_image_if_exists(email, image_path)
+
+    #email.send(fail_silently=False)
+    save_email_log(
+        rule_category="Helmet Rule",
+        place=place,
+        employee_id=emp.emp_id if emp else None,
+        employee_name=emp.emp_name if emp else None,
+        employee_dept=emp.dept if emp else None,
+        person="UNKNOWN" if not emp else None,
+        time=time_str,
+        image_path=image_path
+)

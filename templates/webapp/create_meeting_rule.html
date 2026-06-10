@@ -1,0 +1,635 @@
+{% extends 'webapp/layouts/base.html' %}
+{% load static %}
+{% block content %}
+<link
+  href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Outfit:wght@300;400;500;600&display=swap"
+  rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="{% static 'webapp/assets/css/violation.css' %}" id="main-style-link" />
+<style>
+  .multi-dropdown {
+    position: relative;
+    width: 100%;
+  }
+
+  .dropdown-header {
+    padding: 8px;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    background: #fff;
+  }
+
+  .dropdown-body {
+    display: none;
+    /* default hidden */
+    position: absolute;
+    width: 100%;
+    background: #fff;
+    border: 1px solid #ccc;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+  }
+
+  .dropdown-body.show {
+    display: block;
+    /* show when toggled */
+  }
+</style>
+<div class="container create_meating_rule">
+  <!-- ================= FORM ================= -->
+  <section class="brood_comes_header_card">
+    <div class="row">
+      <div class="col-md-8">
+        <div class="metting_rules">
+          <h2>
+            <i class="ti ti-calendar-plus rule-icon"></i>
+            Meeting Rules
+          </h2>
+        </div>
+      </div>
+      <div class="col-md-4 text-end">
+        <a href="{% url 'create_rule' %}" class="save-btn">Back</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="meeting-form">
+    <form method="POST">
+      {% csrf_token %}
+
+      <div class="row">
+        <div class="col-md-3">
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" name="date" required />
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group">
+            <label>Start Time</label>
+            <input type="time" name="start_time" required />
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group">
+            <label>End Time</label>
+            <input type="time" name="end_time" required />
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group">
+            <label>Departments</label>
+
+            <div class="multi-dropdown" id="departmentDropdown">
+              <div class="dropdown-header" onclick="toggleDepartmentDropdown()">
+                <span id="departmentDropdownText">Select Department(s)</span>
+                <span class="arrow"><i class="ti ti-chevron-down"></i></span>
+              </div>
+
+              <div class="dropdown-body" id="departmentDropdownBody">
+                {% for d in departments %}
+                <label class="camera-item">
+                  <input type="checkbox" name="department" value="{{ d }}" onchange="updateDepartmentText()" />
+                  {{ d }}
+                </label>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group">
+            <label>Place (Camera)</label>
+
+            <div class="multi-dropdown" id="cameraDropdown">
+              <div class="dropdown-header" onclick="toggleCameraDropdown()">
+                <span id="cameraDropdownText">Select Camera(s)</span>
+                <span class="arrow"><i class="ti ti-chevron-down"></i></span>
+              </div>
+
+              <div class="dropdown-body" id="cameraDropdownBody">
+                {% for cam in cameras %}
+                <label class="camera-item">
+                  <input type="checkbox" name="place" value="{{ cam }}" onchange="updateCameraText()" />
+                  {{ cam }}
+                </label>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group">
+            <label>Status</label>
+            <select name="active" required>
+              <option value="true">Active</option>
+              <option value="false">Inactive</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <div class="form-group">
+            <label>Head Email</label>
+            <input type="email" name="head_email" placeholder="Your Email" required />
+          </div>
+        </div>
+      </div>
+      <button type="submit" class="save-btn">Save Meeting Rule</button>
+    </form>
+  </div>
+
+  <!-- ================= RULE LIST ================= -->
+
+  <table class="table table-bordered mb-0">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Time</th>
+        <th>Department</th>
+        <th>Place</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+
+    {% for key, r in rules.items %}
+    <tr>
+      <td>{{ r.date }}</td>
+      <td>{{ r.start_time }} - {{ r.end_time }}</td>
+      <td>{{ r.department|join:', ' }}</td>
+      <td>{{ r.place }}</td>
+      <td>
+
+        {% if r.active %}
+        <span style="color:green;font-weight:600">ACTIVE</span>
+        <span class="sep">|</span>
+        <a href="{% url 'toggle_meeting_rule' key %}" style="margin-left:10px;color:#d00;">
+          <!-- Deactivate icon: tabler icons power-off -->
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            style="vertical-align:middle">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path
+              d="M7 6a7.941 7.941 0 0 0 -3.6 6.83c0 4.584 3.716 8.17 8.6 8.17s8.6 -3.586 8.6 -8.17a7.94 7.94 0 0 0 -3.6 -6.83" />
+            <path d="M12 6l0 -5" />
+          </svg>
+        </a>
+        {% else %}
+        <span style="color:red;font-weight:600">INACTIVE</span>
+        <span class="sep">|</span>
+        <a href="{% url 'toggle_meeting_rule' key %}" style="margin-left:10px;color:#0a7;">
+          <!-- Activate icon: tabler icons power -->
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            style="vertical-align:middle">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path
+              d="M7 6a7.941 7.941 0 0 0 -3.6 6.83c0 4.584 3.716 8.17 8.6 8.17s8.6 -3.586 8.6 -8.17a7.94 7.94 0 0 0 -3.6 -6.83" />
+            <path d="M12 6l0 -5" />
+          </svg>
+        </a>
+        {% endif %}|
+        <a href="{% url 'delete_meeting_rule' key %}"
+          onclick="return confirm('Are you sure you want to delete this rule?')" style="color:#900;font-weight:600;">
+          <!-- Delete icon: tabler icons trash -->
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            style="vertical-align:middle">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path d="M4 7l16 0" />
+            <path d="M10 11l0 6" />
+            <path d="M14 11l0 6" />
+            <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+            <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+          </svg>
+        </a>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+
+
+
+<style>
+  .group_gatering_flex {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .data_table_section .fp-grid3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+  }
+</style>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      <section class="data_table_section mt-4">
+        <form id="filterForm">
+          <div class="filter-panel">
+            <div class="fp-head">
+              <i class="bi bi-funnel-fill"></i>
+              <span>Filter & Search Records</span>
+            </div>
+
+            <div class="fp-grid3">
+              <div class="fp-cell">
+                <div class="fp-lbl">
+                  <i class="bi bi-geo-alt"></i> Place
+                </div>
+                <input type="text" id="filterPlace" class="fc" placeholder="e.g. Conference Hall" />
+              </div>
+
+              <div class="fp-cell">
+                <div class="fp-lbl">
+                  <i class="bi bi-calendar-event"></i> Date
+                </div>
+                <input type="date" id="filterDate" class="fc" />
+              </div>
+              <div class="fp-cell">
+                <button type="button" class="btn-apply" onclick="applyFilters()"><i class="bi bi-funnel"></i>
+                  Apply</button>
+                <button type="button" class="btn-clr" onclick="clearFilters()"><i class="bi bi-x-lg"></i></button>
+              </div>
+            </div>
+
+            <div class="fp-tags" id="fpTags"></div>
+          </div>
+        </form>
+
+        <div class="tc">
+          <div class="tc-head">
+            <div class="tc-title">
+              <i class="bi bi-table"></i> Meeting Records
+            </div>
+            <div>
+              <span class="rec-pill" id="recordCount">0 records</span>
+            </div>
+          </div>
+
+          <div style="overflow-x: auto">
+            <table id="detectionTable">
+              <thead>
+                <tr>
+                  <th style="width:100px">Image</th>
+                  <th style="width:28%">Place</th>
+                  <th style="width:22%">Meeting Time</th>
+                  <th style="width:14%">Total Emp</th>
+                  <th style="width:14%">Present</th>
+                  <th style="width:22%">Capture Date & Time</th>
+                  <th style="width:12%; text-align:center">Action</th>
+                </tr>
+              </thead>
+
+              <tbody id="tbody">
+                {% for r in meeting_records %}
+                <tr data-place="{{ r.place }}" data-time="{{ r.time }}" data-date="{{ r.created_at|date:'Y-m-d' }}"
+                  data-total_emp="{{ r.total_emp }}" data-present_emp="{{ r.present_emp }}"
+                  data-missing_names="{{ r.missing_emp }}" data-image_path="{{ r.image_path }}">
+                  <td>
+                    {% if OS_TYPE == "Windows" %}
+                        <img src="{{ MEDIA_URL }}{{ r.image_path }}" class="ct" alt="meeting" />
+                    {% else %}
+                        <img src="/media/{{ r.image_path }}" class="ct" alt="meeting" />
+                    {% endif %}
+                  </td>
+
+                  <td>{{ r.place }}</td>
+
+                  <td>{{ r.time }}</td>
+
+                  <td>{{ r.total_emp }}</td>
+
+                  <td>{{ r.present_emp }}</td>
+
+                  <td>{{ r.created_at|date:'Y-m-d H:i' }}</td>
+
+                  <td style="text-align:center">
+                    <button class="btn-view" data-modal="modal{{ forloop.counter }}"><i class="bi bi-eye-fill"></i>
+                      View</button>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <div class="pag">
+            <div>
+              Showing <b>1</b>-<b>3</b> of <b id="totalRecords">3</b>
+            </div>
+            <div class="pag-btns" id="pagBtns"></div>
+          </div>
+        </div>
+
+        {% for r in meeting_records %}
+        <div class="overlay" id="modal{{ forloop.counter }}">
+          <div class="mbox">
+            <div class="mh">
+              <div class="mh-title">
+                <i class="bi bi-info-circle-fill"></i>
+                <div>
+                  <div>Meeting at {{ r.place }}</div>
+                  <div class="mh-sub">{{ r.time }}</div>
+                </div>
+              </div>
+
+              <button class="mh-close"><i class="bi bi-x-lg"></i></button>
+            </div>
+
+            <div class="mbody">
+              <div class="mb-left">
+                {% if OS_TYPE == "Windows" %}
+                    <img src="{{ MEDIA_URL }}{{ r.image_path }}" alt="Meeting" />
+                {% else %}
+                    <img src="/media/{{ r.image_path }}" alt="Meeting" />
+                {% endif %}
+                <div class="mb-img-lbl">
+                  <i class="bi bi-camera-fill"></i> Captured Image
+                </div>
+              </div>
+
+              <div class="mb-right">
+                <div class="ms-title">
+                  <i class="bi bi-geo-alt"></i> Location & Time
+                </div>
+
+                <div class="mr">
+                  <div class="mk">Place</div>
+                  <div class="mv">{{ r.place }}</div>
+                </div>
+
+                <div class="mr">
+                  <div class="mk">Meeting Time</div>
+                  <div class="mv">{{ r.time }}</div>
+                </div>
+
+                <div class="mr">
+                  <div class="mk">Capture Date & Time</div>
+                  <div class="mv">{{ r.created_at|date:'Y-m-d H:i' }}</div>
+                </div>
+
+                <div class="ms-title">
+                  <i class="bi bi-people"></i> Attendance Summary
+                </div>
+
+                <div class="mr">
+                  <div class="mk">Total Employees</div>
+                  <div class="mv">{{ r.total_emp }}</div>
+                </div>
+
+                <div class="mr">
+                  <div class="mk">Present</div>
+                  <div class="mv">{{ r.present_emp }}</div>
+                </div>
+
+                <div class="mr">
+                  <div class="mk">Missing Persons</div>
+                  <div class="mv">{{ r.missing_emp|default:'None' }}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mfoot">
+              <button class="btn-cm">Close</button>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </section>
+
+      <script>
+        // ==================== CONFIG ====================
+        const ROWS_PER_PAGE = 10;
+        let currentPage = 1;
+        let visibleRows = [];
+
+        // ==================== FILTER LOGIC ====================
+        const rows = document.querySelectorAll('#tbody tr');
+        const recordCountEl = document.getElementById('recordCount');
+
+        function applyFilters() {
+          const placeVal = document.getElementById('filterPlace').value.toLowerCase().trim();
+          const dateVal = document.getElementById('filterDate').value.trim();
+
+          const totalEmpInput = document.getElementById('filterTotalEmp');
+          const totalEmpVal = totalEmpInput ? totalEmpInput.value.trim() : '';
+
+          visibleRows = [];
+
+          rows.forEach((row) => {
+            const place = row.dataset.place?.toLowerCase() || '';
+            const date = row.dataset.date || '';
+            const total_emp = row.dataset.total_emp || '';
+
+            let show = true;
+            if (placeVal && !place.includes(placeVal)) show = false;
+            if (dateVal && !date.includes(dateVal)) show = false;
+            if (totalEmpVal && total_emp !== totalEmpVal) show = false;
+
+            if (show) visibleRows.push(row);
+
+            // Hide all rows first; renderPage() will show the correct ones
+            row.style.display = 'none';
+          });
+
+          currentPage = 1;
+          renderPage();
+          updateTags();
+        }
+
+        function renderPage() {
+          // Hide all rows
+          rows.forEach((row) => (row.style.display = 'none'));
+
+          const start = (currentPage - 1) * ROWS_PER_PAGE;
+          const end = start + ROWS_PER_PAGE;
+          const pageRows = visibleRows.slice(start, end);
+
+          pageRows.forEach((row) => (row.style.display = ''));
+
+          const total = visibleRows.length;
+          const totalPages = Math.ceil(total / ROWS_PER_PAGE);
+
+          recordCountEl.textContent = `${total} records`;
+
+          // Update "Showing X-Y of Z"
+          const showStart = total === 0 ? 0 : start + 1;
+          const showEnd = Math.min(end, total);
+          const showingEl = document.querySelector('.pag');
+          if (showingEl) {
+            const divs = showingEl.querySelectorAll('b');
+            if (divs.length >= 3) {
+              divs[0].textContent = showStart;
+              divs[1].textContent = showEnd;
+              divs[2].textContent = total;
+            }
+          }
+
+          renderPagButtons(totalPages);
+        }
+
+        function renderPagButtons(totalPages) {
+          const container = document.getElementById('pagBtns');
+          container.innerHTML = '';
+
+          if (totalPages <= 1) return;
+
+          // Prev
+          if (currentPage > 1) {
+            const btn = document.createElement('button');
+            btn.className = 'pb pb-w';
+            btn.innerHTML = '<i class="bi bi-chevron-left"></i>';
+            btn.onclick = () => { currentPage--; renderPage(); };
+            container.appendChild(btn);
+          }
+
+          // Page numbers
+          for (let i = 1; i <= totalPages; i++) {
+            const btn = document.createElement('button');
+            btn.className = 'pb' + (i === currentPage ? ' active' : '');
+            btn.textContent = i;
+            btn.onclick = () => { currentPage = i; renderPage(); };
+            container.appendChild(btn);
+          }
+
+          // Next
+          if (currentPage < totalPages) {
+            const btn = document.createElement('button');
+            btn.className = 'pb pb-w';
+            btn.innerHTML = '<i class="bi bi-chevron-right"></i>';
+            btn.onclick = () => { currentPage++; renderPage(); };
+            container.appendChild(btn);
+          }
+        }
+
+        function clearFilters() {
+          document.getElementById('filterPlace').value = '';
+          document.getElementById('filterDate').value = '';
+          const totalEmpInput = document.getElementById('filterTotalEmp');
+          if (totalEmpInput) totalEmpInput.value = '';
+          applyFilters();
+        }
+
+        function updateTags() {
+          const container = document.getElementById('fpTags');
+          container.innerHTML = '';
+
+          const filters = [
+            { id: 'filterPlace', prefix: 'Place' },
+            { id: 'filterDate', prefix: 'Date' },
+          ];
+
+          filters.forEach((f) => {
+            const input = document.getElementById(f.id);
+            if (!input) return;
+            const val = input.value.trim();
+            if (val) {
+              const tag = document.createElement('div');
+              tag.className = 'ftag';
+              tag.innerHTML = `
+          <i class="bi bi-tag-fill" style="font-size:0.62rem;opacity:0.7"></i>
+          ${f.prefix}: ${val}
+          <button class="ftag-close"><i class="bi bi-x-lg"></i></button>
+        `;
+              tag.querySelector('button').onclick = () => {
+                input.value = '';
+                applyFilters();
+              };
+              container.appendChild(tag);
+            }
+          });
+        }
+
+        // Modal open/close logic
+        document.querySelectorAll('.btn-view').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const id = btn.dataset.modal;
+            document.getElementById(id)?.classList.add('open');
+          });
+        });
+
+        document.querySelectorAll('.overlay').forEach((ov) => {
+          ov.addEventListener('click', (e) => {
+            if (e.target === ov) ov.classList.remove('open');
+          });
+        });
+
+        document.querySelectorAll('.mh-close, .btn-cm').forEach((el) => {
+          el.addEventListener('click', () => {
+            el.closest('.overlay').classList.remove('open');
+          });
+        });
+
+        // Initial render
+        applyFilters();
+      </script>
+    </div>
+  </div>
+
+
+
+  <script>
+    function toggleCameraDropdown() {
+      const body = document.getElementById('cameraDropdownBody')
+      body.style.display = body.style.display === 'block' ? 'none' : 'block'
+    }
+
+    function updateCameraText() {
+      const checked = document.querySelectorAll('input[name="place"]:checked')
+      const text = document.getElementById('cameraDropdownText')
+
+      if (checked.length === 0) {
+        text.innerText = 'Select Camera(s)'
+      } else {
+        text.innerText = checked.length + ' camera(s) selected'
+      }
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function (e) {
+      const dropdown = document.getElementById('cameraDropdown')
+      if (!dropdown.contains(e.target)) {
+        document.getElementById('cameraDropdownBody').style.display = 'none'
+      }
+    })
+  </script>
+  <script>
+    // Toggle
+    function toggleDepartmentDropdown() {
+      document.getElementById("departmentDropdownBody")
+        .classList.toggle("show");
+    }
+
+    // Update Selected Text
+    function updateDepartmentText() {
+      const checkboxes = document.querySelectorAll(
+        "#departmentDropdownBody input[type='checkbox']"
+      );
+
+      let selected = [];
+
+      checkboxes.forEach(cb => {
+        if (cb.checked) {
+          selected.push(cb.value);
+        }
+      });
+
+      document.getElementById("departmentDropdownText").innerText =
+        selected.length > 0 ? selected.join(", ") : "Select Department(s)";
+    }
+
+    // 👇 CLOSE WHEN CLICKING OUTSIDE
+    document.addEventListener("click", function (event) {
+      const dropdown = document.getElementById("departmentDropdown");
+      const dropdownBody = document.getElementById("departmentDropdownBody");
+
+      if (!dropdown.contains(event.target)) {
+        dropdownBody.classList.remove("show");
+      }
+    });
+  </script>
+  {% endblock %}

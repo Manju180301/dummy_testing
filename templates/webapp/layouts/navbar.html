@@ -1,0 +1,220 @@
+{% load static %}
+
+<aside class="app-sidebar app-light-sidebar" id="adminSidebar">
+  <div class="app-navbar-wrapper">
+    <!-- Logo -->
+    <div class="brand-link brand-logo">
+      <a href="{% url 'index' %}" class="b-brand"><img src="{% static 'webapp/assets/images/logo.png' %}" alt="Logo" class="logo logo-lg w-50" /></a>
+    </div>
+
+    <!-- Main Navigation -->
+    <div class="navbar-content">
+      <ul class="app-navbar">
+        <li class="nav-item nav-hasmenu">
+          <a href="#!" class="nav-link" aria-label="Dashboard" title="Dashboard">
+            <span class="nav-icon"><i class="ti ti-layout-2"></i></span>
+            <span class="nav-text">Dashboard</span>
+            <span class="nav-arrow"><i data-feather="chevron-right"></i></span>
+          </a>
+          <ul class="nav-submenu">
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'index' %}">Default</a>
+            </li>
+            {% comment %}
+            <li class="nav-item">
+              <a class="nav-link" href="dashboard/ecommerce.html">Ecommerce</a>
+            </li>
+            {% endcomment %}
+          </ul>
+        </li>
+
+        <li class="nav-item nav-caption">
+          <label>Employee</label>
+        </li>
+
+        <li class="nav-item nav-hasmenu">
+          <a href="#!" class="nav-link" aria-label="Report" title="Report">
+            <span class="nav-icon"><i data-feather="video"></i></span>
+            <span class="nav-text">Training Page</span>
+            <span class="nav-arrow"><i data-feather="chevron-right"></i></span>
+          </a>
+          <ul class="nav-submenu">
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'enter_emp_id' %}">Face Record</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'training_dashboard' %}">Face Training</a>
+            </li>
+          </ul>
+        </li>
+
+        <li class="nav-item nav-hasmenu">
+          <a href="#!" class="nav-link" aria-label="Add Employee" title="Add Employee">
+            <span class="nav-icon"><i class="ti ti-layout-2"></i></span>
+            <span class="nav-text">Add Employee</span>
+            <span class="nav-arrow"><i data-feather="chevron-right"></i></span>
+          </a>
+          <ul class="nav-submenu">
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'face_register' %}">Add Face</a>
+            </li>
+          </ul>
+        </li>
+
+        <li class="nav-item nav-hasmenu">
+          <a href="#!" class="nav-link" aria-label="Cameras" title="Cameras">
+            <span class="nav-icon"><i data-feather="camera"></i></span>
+            <span class="nav-text">Cameras</span>
+            <span class="nav-arrow"><i data-feather="chevron-right"></i></span>
+          </a>
+          <ul class="nav-submenu">
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'camera' %}">CCTV</a>
+            </li>
+          </ul>
+        </li>
+
+        <li class="nav-item nav-hasmenu">
+          <a href="#!" class="nav-link" aria-label="Employee Track" title="Employee Track">
+            <span class="nav-icon"><i data-feather="activity"></i></span>
+            <span class="nav-text">Employee Track</span>
+            <span class="nav-arrow"><i data-feather="chevron-right"></i></span>
+          </a>
+          <ul class="nav-submenu">
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'track_employee' %}">Track</a>
+            </li>
+          </ul>
+        </li>
+
+        <li class="nav-item nav-hasmenu">
+          <a href="#!" class="nav-link" aria-label="Persons" title="Persons">
+            <span class="nav-icon"><i data-feather="users"></i></span>
+            <span class="nav-text">Persons</span>
+            <span class="nav-arrow"><i data-feather="chevron-right"></i></span>
+          </a>
+          <ul class="nav-submenu">
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'detected_faces' %}">Detected Face</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'no_face' %}">No Face</a>
+            </li>
+          </ul>
+        </li>
+
+        <li class="nav-item nav-hasmenu">
+          <a href="#!" class="nav-link" aria-label="Employee List" title="Employee List">
+            <span class="nav-icon"><i data-feather="eye"></i></span>
+            <span class="nav-text">Employee List</span>
+            <span class="nav-arrow"><i data-feather="chevron-right"></i></span>
+          </a>
+          <ul class="nav-submenu">
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'employee_list' %}">List</a>
+            </li>
+          </ul>
+        </li>
+
+        <li class="nav-item nav-hasmenu">
+          <a href="#!" class="nav-link" aria-label="Attendance" title="Attendance">
+            <span class="nav-icon"><i data-feather="calendar"></i></span>
+            <span class="nav-text">Attendance</span>
+            <span class="nav-arrow"><i data-feather="chevron-right"></i></span>
+          </a>
+          <ul class="nav-submenu">
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'attendance_page' %}">Time</a>
+            </li>
+          </ul>
+        </li>
+
+        <li class="nav-item nav-hasmenu">
+          <a href="#!" class="nav-link" aria-label="Alert" title="Alert">
+            <span class="nav-icon"><i data-feather="bell"></i></span>
+            <span class="nav-text">Alert</span>
+            <span class="nav-arrow"><i data-feather="chevron-right"></i></span>
+          </a>
+          <ul class="nav-submenu">
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'login' %}">Create Rules</a>
+            </li>
+          </ul>
+        </li>
+
+        <li class="nav-item nav-hasmenu">
+          <a href="#!" class="nav-link" aria-label="Report" title="Report">
+            <span class="nav-icon"><i data-feather="trending-up"></i></span>
+            <span class="nav-text">Report</span>
+            <span class="nav-arrow"><i data-feather="chevron-right"></i></span>
+          </a>
+          <ul class="nav-submenu">
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'violation_dashboard' %}">Rule Report</a>
+            </li>
+          </ul>
+        </li>
+
+        
+      </ul>
+    </div>
+  </div>
+</aside>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // 1. Accordion behavior (open/close menus)
+    document.querySelectorAll('.nav-item.nav-hasmenu > a').forEach((link) => {
+      link.addEventListener('click', function (e) {
+        e.preventDefault()
+        const parentLi = this.parentElement
+  
+        // Close all other menus (accordion style)
+        document.querySelectorAll('.nav-item.nav-hasmenu.active').forEach((item) => {
+          if (item !== parentLi) item.classList.remove('active')
+        })
+  
+        // Toggle current menu
+        parentLi.classList.toggle('active')
+      })
+    })
+  
+    // 2. Auto-highlight current page
+    let currentPath = window.location.pathname
+    // Remove trailing slash for consistent comparison
+    if (currentPath.endsWith('/')) {
+      currentPath = currentPath.slice(0, -1)
+    }
+  
+    console.log('Current path:', currentPath)
+  
+    document.querySelectorAll('.nav-submenu .nav-link').forEach((link) => {
+      let href = link.getAttribute('href') || ''
+  
+      if (!href || href.startsWith('#') || href.startsWith('javascript:')) return
+  
+      // Normalize href (remove trailing slash)
+      let target = href
+      if (target.endsWith('/')) {
+        target = target.slice(0, -1)
+      }
+  
+      // Exact match is usually safest for Django named URLs
+      if (target === currentPath) {
+        console.log('MATCH:', href)
+  
+        // Activate leaf item
+        const leafLi = link.closest('.nav-item')
+        if (leafLi) leafLi.classList.add('active')
+  
+        // Activate all parent menus (show submenu + rotate arrow)
+        let current = leafLi
+        while (current && current !== document) {
+          if (current.classList.contains('nav-item') && current.classList.contains('nav-hasmenu')) {
+            current.classList.add('active')
+          }
+          current = current.parentElement
+        }
+      }
+    })
+  })
+</script>

@@ -1,0 +1,33 @@
+{% load static%}
+<!DOCTYPE html>
+<html lang="en">
+
+{% include "webapp/layouts/head.html" %}
+<body class="theme-2">
+ {% include "webapp/layouts/loader.html" %}
+  
+  {% include "webapp/layouts/header.html" %}
+
+  {% include "webapp/layouts/navbar.html" %}
+  
+
+<!-- [ Main Content ] start -->
+<div class="page-content-wrapper">
+    <div class="content-container">
+        <div class="page-content">
+    {% block content %}
+    
+    {% endblock %}
+        </div>
+    </div>
+</div>
+<!-- [ Main Content ] end -->
+
+
+{% include "webapp/layouts/script.html" %}
+
+{% include "webapp/layouts/theme.html" %}
+
+</body>
+
+</html>

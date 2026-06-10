@@ -1,0 +1,166 @@
+{% extends "webapp/layouts/base.html" %}
+{% block content %}
+
+
+<!-- ================= FORM ================= -->
+<div class="container phone_usage_rules_page">
+  <section class="brood_comes_header_card">
+    <div class="row">
+      <div class="col-md-8">
+        <div class="metting_rules">
+          <h2>
+            <i class="ti ti-device-mobile-message rule-icon"></i> Create Phone
+            Usage Rule
+          </h2>
+        </div>
+      </div>
+      <div class="col-md-4 text-end">
+        <a href="{% url 'create_rule' %}" class="save-btn">Back</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="rule-form">
+    <form method="POST">
+      {% csrf_token %}
+
+      <div class="row">
+        <div class="col-md-4">
+          <!-- STATUS -->
+          <div class="form-group">
+            <label>Status</label>
+            <select name="active">
+              <option value="true">Active</option>
+              <option value="false">Inactive</option>
+            </select>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <!-- HEAD EMAIL -->
+          <div class="form-group">
+            <label>Head Email</label>
+            <input type="email" name="head_email" placeholder="Your Email" required />
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <!-- CAMERA MULTI SELECT -->
+          <div class="form-group">
+            <label>Working Place (Camera)</label>
+
+            <div class="multi-dropdown" id="cameraDropdown">
+              <div class="dropdown-header" onclick="toggleDropdown()">
+                <span id="dropdownText">Select Camera(s)</span>
+                <span><i class="ti ti-chevron-down"></i></span>
+              </div>
+
+              <div class="dropdown-body" id="dropdownBody">
+                {% for cam in cameras %}
+                <label class="camera-item">
+                  <input type="checkbox" name="place" value="{{ cam }}" onchange="updateText()" />
+                  {{ cam }}
+                </label>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button type="submit" class="save-btn">Save Phone Usage Rule</button>
+    </form>
+  </div>
+
+  <!-- ================= RULE LIST ================= -->
+
+  <table class="table table-bordered mb-0">
+    <thead>
+      <tr>
+        <th>Place (Camera)</th>
+        <th>Action</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+
+    {% for key, r in rules.items %}
+    <tr>
+      <td>{{ r.place|join:', ' }}</td>
+      <td>
+        {% comment %} {% if r.active %}
+        <span class="status-active">🔔 Active</span>
+        <a class="action-link" href="{% url 'toggle_phone_usage_rule' key %}">Deactivate</a>
+        {% else %}
+        <span class="status-inactive">🚫 Inactive</span>
+        <a class="action-link" href="{% url 'toggle_phone_usage_rule' key %}">Activate</a>
+        {% endif %}
+        <a class="action-link" style="color:red" href="{% url 'delete_phone_usage_rule' key %}"
+          onclick="return confirm('Delete this rule?')">🗑 Delete</a>
+        {% endcomment %}
+
+        {% if r.active %}
+        <span style="color:green;font-weight:600">ACTIVE</span>
+        <span class="sep">|</span>
+        <a class="action-link" href="{% url 'toggle_phone_usage_rule' key %}" style="margin-left:10px;color:#d00;">
+          <!-- tabler icons power-off (deactivate) -->
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path d="M7 6a7.75 7.75 0 1 0 10 0" />
+            <path d="M12 4l0 8" />
+          </svg>
+        </a>
+        {% else %}
+        <span style="color:red;font-weight:600">INACTIVE</span>
+        <span class="sep">|</span>
+        <a class="action-link" href="{% url 'toggle_phone_usage_rule' key %}" style="margin-left:10px;color:#0a7;">
+          <!-- tabler icons power (activate) -->
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path d="M7 6a7.75 7.75 0 1 0 10 0" />
+            <path d="M12 4l0 8" />
+          </svg>
+        </a>
+        {% endif %}
+      </td>
+      <td>
+        <a class="action-link" style="color:red" href="{% url 'delete_phone_usage_rule' key %}"
+          onclick="return confirm('Delete this rule?')">
+          <!-- tabler icons trash (delete) -->
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path d="M4 7l16 0" />
+            <path d="M10 11l0 6" />
+            <path d="M14 11l0 6" />
+            <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+            <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+          </svg>
+        </a>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+<!-- ================= JS ================= -->
+
+<script>
+  function toggleDropdown() {
+    const body = document.getElementById('dropdownBody')
+    body.style.display = body.style.display === 'block' ? 'none' : 'block'
+  }
+
+  function updateText() {
+    const checked = document.querySelectorAll('input[name="place"]:checked')
+    const text = document.getElementById('dropdownText')
+
+    text.innerText = checked.length ? checked.length + ' camera(s) selected' : 'Select Camera(s)'
+  }
+
+  document.addEventListener('click', function (e) {
+    const dropdown = document.getElementById('cameraDropdown')
+    if (!dropdown.contains(e.target)) {
+      document.getElementById('dropdownBody').style.display = 'none'
+    }
+  })
+</script>
+{% endblock %}
