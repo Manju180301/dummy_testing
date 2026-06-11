@@ -1,0 +1,261 @@
+{% extends 'webapp/layouts/base.html' %}
+{% block content %}
+
+<div class="container create_allowed_page">
+  <!-- ================= FORM ================= -->
+
+  <!-- Top Header -->
+  <section class="brood_comes_header_card">
+    <div class="row">
+      <div class="col-md-8">
+        <div class="metting_rules">
+          <h2>
+            <i class="ti ti-building-store rule-icon"></i>
+            Allowed Place Rule
+          </h2>
+        </div>
+      </div>
+      <div class="col-md-4 text-end">
+        <a href="{% url 'create_rule' %}" class="save-btn">Back</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Form -->
+  <div class="rule-form">
+    <form method="POST">
+      {% csrf_token %}
+
+      <div class="row">
+        <!-- Department -->
+        <div class="col-md-12">
+          <div class="form-group">
+            <label>Allowed Departments</label>
+
+            <div class="multi-dropdown" id="deptDropdown">
+              <div class="dropdown-header" onclick="toggleDeptDropdown()">
+                <span id="deptDropdownText">Select Department(s)</span>
+                <span class="arrow"><i class="ti ti-chevron-down"></i></span>
+              </div>
+
+              <div class="dropdown-body" id="deptDropdownBody">
+                {% for d in departments %}
+                <label class="camera-item">
+                  <input type="checkbox" name="department" value="{{ d }}" onchange="updateDeptText()" />
+                  <span>{{ d }}</span>
+                </label>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Status -->
+        <div class="col-md-4">
+          <div class="form-group">
+            <label>Status</label>
+            <select name="active">
+              <option value="true">Active</option>
+              <option value="false">Inactive</option>
+            </select>
+          </div>
+        </div>
+        <!-- Head Email -->
+        <div class="col-md-4">
+          <div class="form-group">
+            <label>Head Email</label>
+            <input type="email" name="head_email" placeholder="Your Email" required />
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <!-- Camera Dropdown -->
+          <div class="form-group">
+            <label>Allowed Place (Camera)</label>
+
+            <div class="multi-dropdown" id="cameraDropdown">
+              <div class="dropdown-header" onclick="toggleDropdown()">
+                <span id="dropdownText">Select Camera(s)</span>
+                <span class="arrow">▾</span>
+              </div>
+
+              <div class="dropdown-body" id="dropdownBody">
+                {% for cam in cameras %}
+                <label class="camera-item">
+                  <input type="checkbox" name="place" value="{{ cam }}" onchange="updateDropdownText()" />
+                  <span>{{ cam }}</span>
+                </label>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Time Mode -->
+        <div class="col-md-4">
+          <div class="form-group">
+            <label>Time Mode</label>
+            <select name="time_mode" id="timeMode" onchange="toggleTimeFields()">
+              <option value="all_time">All Time</option>
+              <option value="custom">Custom Time</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Start -->
+        <div class="col-md-4 time-fields" style="display:none;">
+          <div class="form-group">
+            <label>Start Time</label>
+            <input type="time" name="start_time">
+          </div>
+        </div>
+
+        <!-- End -->
+        <div class="col-md-4 time-fields" style="display:none;">
+          <div class="form-group">
+            <label>End Time</label>
+            <input type="time" name="end_time">
+          </div>
+        </div>
+
+        <!-- Zone Type -->
+        <div class="col-md-4">
+          <div class="form-group">
+            <label>Zone Type</label>
+            <select name="zone_type" required>
+              <option value="Zone_1- Red">Zone_1- Red</option>
+              <option value="Zone_2 - Yellow">Zone_2 - Yellow</option>
+              <option value="Zone_3 - Green">Zone_3 - Green</option>
+              <option value="Zone_4 - Orange">Zone_4 - Orange</option>
+              <option value="Zone_5 - Blue">Zone_5 - Blue</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <button type="submit" class="save-btn">Save Allowed Place Rule</button>
+    </form>
+  </div>
+
+  <!-- ================= RULE LIST ================= -->
+
+  <table class="table table-bordered mb-0">
+    <thead>
+      <tr>
+        <th>Department</th>
+        <th>Allowed Place</th>
+        <th>Zone</th>
+        <th>Time</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    {% for key, r in rules.items %}
+    <tr>
+      <td>{{ r.department }}</td>
+      <td>{{ r.place|join:', ' }}</td>
+      <td>{{ r.zone_type|upper }}</td>
+      <td>
+        {% if r.time_mode == "all_time" %}
+        All Time
+        {% else %}
+        {{ r.start_time }} - {{ r.end_time }}
+        {% endif %}
+      </td>
+      <td>
+
+        <div>
+          {% if r.active %}
+          <span style="color:green;font-weight:600">ACTIVE</span>
+          <span class="sep">|</span>
+          <a href="{% url 'toggle_allowed_place_rule' key %}" style="margin-left:10px;color:#d00;">
+            <!-- tabler icons power-off (deactivate) -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path
+                d="M7 6a7.941 7.941 0 0 0 -3.6 6.83c0 4.584 3.716 8.17 8.6 8.17s8.6 -3.586 8.6 -8.17a7.94 7.94 0 0 0 -3.6 -6.83" />
+              <path d="M12 6l0 -5" />
+            </svg>
+          </a>
+          {% else %}
+          <span style="color:red;font-weight:600">INACTIVE</span>
+          <span class="sep">|</span>
+          <a href="{% url 'toggle_allowed_place_rule' key %}" style="margin-left:10px;color:#0a7;">
+            <!-- tabler icons power (activate) -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path
+                d="M7 6a7.941 7.941 0 0 0 -3.6 6.83c0 4.584 3.716 8.17 8.6 8.17s8.6 -3.586 8.6 -8.17a7.94 7.94 0 0 0 -3.6 -6.83" />
+              <path d="M12 6l0 -5" />
+            </svg>
+          </a>
+          {% endif %}
+          <span class="sep">|</span>
+          <a href="{% url 'delete_allowed_place_rule' key %}" onclick="return confirm('Delete this rule?')"
+            style="color:red;margin-left:10px;">
+            <!-- tabler icons trash (delete) -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M4 7l16 0" />
+              <path d="M10 11l0 6" />
+              <path d="M14 11l0 6" />
+              <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+              <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+            </svg>
+          </a>
+        </div>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+<script>
+  function toggleDropdown() {
+    const body = document.getElementById('dropdownBody')
+    body.style.display = body.style.display === 'block' ? 'none' : 'block'
+  }
+
+  function updateDropdownText() {
+    const checked = document.querySelectorAll('input[name="place"]:checked')
+    const text = document.getElementById('dropdownText')
+
+    if (checked.length === 0) {
+      text.innerText = 'Select Camera(s)'
+    } else {
+      text.innerText = checked.length + ' camera(s) selected'
+    }
+  }
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', function (e) {
+    const dropdown = document.getElementById('cameraDropdown')
+    if (!dropdown.contains(e.target)) {
+      document.getElementById('dropdownBody').style.display = 'none'
+    }
+  })
+</script>
+<script>
+  function toggleTimeFields() {
+    let mode = document.getElementById("timeMode").value
+    document.querySelectorAll(".time-fields").forEach(el => {
+      el.style.display = mode === "custom" ? "block" : "none"
+    })
+  }
+</script>
+<script>
+  function toggleDeptDropdown() {
+    const body = document.getElementById('deptDropdownBody')
+    body.style.display = body.style.display === 'block' ? 'none' : 'block'
+  }
+
+  function updateDeptText() {
+    const checked = document.querySelectorAll('input[name="department"]:checked')
+    const text = document.getElementById('deptDropdownText')
+
+    if (checked.length === 0) {
+      text.innerText = 'Select Department(s)'
+    } else {
+      text.innerText = checked.length + ' department(s) selected'
+    }
+  }
+</script>
+{% endblock %}

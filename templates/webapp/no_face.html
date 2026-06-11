@@ -1,0 +1,75 @@
+{% extends 'webapp/layouts/base.html' %}
+{% load static %}
+{% block content %}
+  <div class="container noface_page_div">
+  <div class="container">
+    <div class="search-box">
+      <div class="row">
+        <div class="col-md-12">
+          <div class="no_face">
+            <h2>No Face</h2>
+          </div>
+        </div>
+      </div>
+      <form method="get" class="row">
+        <div class="col-md-5">
+          <div>
+            <input type="date" name="date" value="{{ today|date:'Y-m-d' }}" required />
+          </div>
+        </div>
+        <div class="col-md-5">
+          <div>
+            <select name="camera">
+              <option value="all">All Cameras</option>
+              {% for cam in cameras %}
+              <option value="{{ cam }}">{{ cam }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div>
+            <button class="btn-search">Search</button>
+          </div>
+        </div>
+      </form>
+    </div>
+    {% if searched %}
+    <div class="mb-4 text-center">
+      <span class="badge bg-default fs-6 px-4 py-2">{{ searched.date }} – {{ searched.camera }}</span>
+    </div>
+    {% endif %}
+
+    <div class="grid">
+      {% for r in results %}
+      <div class="card">
+        <div class="text-center">
+          <!--<img src="/media/{{ r.image }}" />-->
+          {% if OS_TYPE == "Windows" %}
+              <img src="{{ MEDIA_URL }}{{ r.image }}" />
+          {% else %}
+              <img src="/media/{{ r.image }}" />
+          {% endif %}
+        </div>
+
+        <p class="camera_location">{{ r.camera }}</p>
+        <div class="time_flex_center">
+          <p class="time-first">
+            <span class="in_out_span">In:</span>
+            <span class="in_out_time">{{ r.first_time|date:'H:i:s' }}</span>
+          </p>
+
+          {% if r.last_time %}
+          <p class="time-last">
+            <span class="in_out_span">Out:</span> <span class="in_out_time">{{ r.last_time|date:'H:i:s' }}</span>
+          </p>
+          {% endif %}
+        </div>
+      </div>
+      {% empty %}
+      <p>No no-face data</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

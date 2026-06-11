@@ -1,0 +1,231 @@
+{% extends "webapp/layouts/base.html" %}
+{% block content %}
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
+<!-- ================= FORM ================= -->
+<div class="conatainer create_inout_rule_page">
+    <section class="brood_comes_header_card">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="metting_rules">
+                    <h2>
+                        <i class="ti ti-clock-cog rule-icon"></i> Create In / Out Time Rule
+                    </h2>
+                </div>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{% url 'create_rule' %}" class="save-btn">Back</a>
+            </div>
+        </div>
+    </section>
+
+    <div class="rule-form">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="inout_place">
+                    <h3>Create In / Out Time Rule</h3>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="text-end">
+                    <button type="button" onclick="addBreak()" class="add-btn">
+                        <i class="ti ti-plus"></i> Add Break
+                    </button>
+                </div>
+            </div>
+        </div>
+        <form method="POST">
+            {% csrf_token %}
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>First Entry Must Be Before</label>
+                        <input type="time" name="in_before" required />
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Last Exit Must Be After</label>
+                        <input type="time" name="out_after" required />
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Attendance Place (Camera)</label>
+                        <div class="multi-dropdown" id="attendanceDropdown">
+                            <div class="dropdown-header" onclick="toggleAttendanceDropdown()">
+                                <span id="attendanceDropdownText">Select Camera(s)</span>
+                                <span><i class="ti ti-chevron-down"></i></span>
+                            </div>
+
+                            <div class="dropdown-body" id="attendanceDropdownBody">
+                                {% for cam in cameras %}
+                                <label class="item">
+                                    <input type="checkbox" name="attendance_place[]" value="{{ cam }}"
+                                        onchange="updateAttendanceText()" />
+                                    {{ cam }}
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select name="active">
+                            <option value="true">Active</option>
+                            <option value="false">Inactive</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label>Head Email</label>
+                    <input type="email" name="head_email" placeholder="Your Email" required />
+                </div>
+            </div>
+            <hr style="margin:20px 0" />
+            <div class="break_heading">
+                <h4><i class="ti ti-tools-kitchen-2"></i> Break Rules</h4>
+            </div>
+            <div id="breakContainer" class="breakcontaine_div"></div>
+            <button type="submit" class="save-btn">Save In / Out Time Rule</button>
+        </form>
+    </div>
+
+    <!-- ================= RULE LIST ================= -->
+
+    <table class="table table-bordered mb-0">
+        <thead>
+            <tr>
+                <th>Attendance In</th>
+                <th>Attendance Out</th>
+                <th>Breaks</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        {% for key, r in rules.items %}
+        <tr>
+            <td>In ≤ {{ r.attendance.in_before }}</td>
+            <td>Out ≥ {{ r.attendance.out_after }}</td>
+            <td>
+                {% for b in r.breaks %}
+                {{ b.name }} :
+                {{ b.start }} - {{ b.end }}
+                ({{ b.place|join:', ' }})<br />
+                {% endfor %}
+            </td>
+            <td>
+
+                {% if r.active %}
+                <span style="color:green;font-weight:600">ACTIVE</span>
+                <span class="sep">|</span>
+                <a class="action-link" href="{% url 'toggle_inout_time_rule' key %}"
+                    style="margin-left:10px;color:#d00;">
+                    <!-- tabler icons power-off (deactivate) -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M7 6a7.75 7.75 0 1 0 10 0" />
+                        <path d="M12 4l0 8" />
+                    </svg>
+                </a>
+                {% else %}
+                <span style="color:red;font-weight:600">INACTIVE</span>
+                <span class="sep">|</span>
+                <a class="action-link" href="{% url 'toggle_inout_time_rule' key %}"
+                    style="margin-left:10px;color:#0a7;">
+                    <!-- tabler icons power (activate) -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M7 6a7.75 7.75 0 1 0 10 0" />
+                        <path d="M12 4l0 8" />
+                    </svg>
+                </a>
+                {% endif %}
+                <a class="action-link" style="color:red" href="{% url 'delete_inout_time_rule' key %}"
+                    onclick="return confirm('Delete rule?')">
+                    <!-- tabler icons trash (delete) -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M4 7l16 0" />
+                        <path d="M10 11l0 6" />
+                        <path d="M14 11l0 6" />
+                        <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+                        <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+                    </svg>
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+</div>
+<!-- ================= JS ================= -->
+
+<script>
+    let breakCount = 0
+
+    function addBreak() {
+        breakCount++
+        const div = document.createElement('div')
+        div.className = 'break-card'
+        div.innerHTML = `
+                                                                                                                                        <div class="break-title">Break ${breakCount}</div>
+                                                                                                                                        <div class="remove-break"  onclick="this.parentElement.remove()">✖ Remove</div>
+                                                                                                                                
+                                                                                                                                        <div class="form-group">
+                                                                                                                                            <label>Break Name</label>
+                                                                                                                                            <input type="text" name="break_name[]" required>
+                                                                                                                                        </div>
+                                                                                                                                
+                                                                                                                                        <div class="form-grid">
+                                                                                                                                            <div class="form-group">
+                                                                                                                                                <label>Start Time</label>
+                                                                                                                                                <input type="time" name="break_start[]" required>
+                                                                                                                                            </div>
+                                                                                                                                
+                                                                                                                                            <div class="form-group">
+                                                                                                                                                <label>End Time</label>
+                                                                                                                                                <input type="time" name="break_end[]" required>
+                                                                                                                                            </div>
+                                                                                                                                
+                                                                                                                                            <div class="form-group">
+                                                                                                                                                <label>Break Place (Camera)</label>
+                                                                                                                                                <select name="break_place[]" required>
+                                                                                                                                                    {% for cam in cameras %}
+                                                                                                                                                        <option value="{{ cam }}">{{ cam }}</option>
+                                                                                                                                                    {% endfor %}
+                                                                                                                                                </select>
+                                                                                                                                            </div>
+                                                                                                                                        </div>
+                                                                                                                                    `
+        document.getElementById('breakContainer').appendChild(div)
+    }
+
+    function toggleAttendanceDropdown() {
+        const body = document.getElementById('attendanceDropdownBody')
+        body.style.display = body.style.display === 'block' ? 'none' : 'block'
+    }
+
+    function updateAttendanceText() {
+        const checked = document.querySelectorAll('input[name="attendance_place[]"]:checked')
+        const text = document.getElementById('attendanceDropdownText')
+
+        text.innerText = checked.length ? checked.length + ' camera(s) selected' : 'Select Camera(s)'
+    }
+
+    // Close dropdown on outside click
+    document.addEventListener('click', function (e) {
+        const dd = document.getElementById('attendanceDropdown')
+        if (dd && !dd.contains(e.target)) {
+            document.getElementById('attendanceDropdownBody').style.display = 'none'
+        }
+    })
+</script>
+{% endblock %}

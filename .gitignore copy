@@ -1,0 +1,46 @@
+# ================== SDK folders ==================
+recognized_cctv/
+arena_sdk/
+camera_sdk/
+data/
+
+# ================== Python virtual environment ==================
+venv/
+env/
+.env
+
+# ================== DLL and binaries ==================
+*.dll
+*.lib
+*.exe
+*.pdb
+*.pyd
+
+# ================== Python cache ==================
+__pycache__/
+*.pyc
+
+# ================== Build folders ==================
+build/
+dist/
+
+# ================== Project-specific ignores ==================
+webapp/upload.py
+webapp/utils.py
+webapp/apps.py
+human_tracking/settings.py
+delete.py
+
+# ================== Other folders ==================
+htrack/
+media/profile_pic/
+
+# ================== Django ==================
+*.log
+db.sqlite3
+ 
+staticfiles/
+
+# ================== OS files ==================
+.DS_Store
+Thumbs.db
